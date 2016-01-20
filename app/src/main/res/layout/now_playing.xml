@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/now_playing_root_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:showIn="@layout/activity_test">
+
+    <RelativeLayout
+        android:id="@+id/now_playing"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- 1 -->
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="visible">
+
+            <ImageView
+                android:id="@+id/now_playing_albumart"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:scaleType="centerCrop"
+                android:src="@drawable/sample_art" />
+
+            <LinearLayout
+                android:id="@+id/now_playing_layout"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="0"
+                android:background="#212121"
+                android:orientation="vertical">
+
+                <RelativeLayout
+                    android:id="@+id/divider_bar"
+                    android:layout_width="fill_parent"
+                    android:layout_height="@dimen/divider_bar"
+                    android:background="#fff">
+
+                </RelativeLayout>
+
+
+                <TextView
+                    android:id="@+id/now_playing_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_above="@+id/now_playing_artist"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:gravity="left"
+                    android:paddingBottom="1dp"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="16dp"
+                    android:singleLine="true"
+                    android:text="Infra Turbo Pigcart Racer"
+                    android:textColor="#fff"
+                    android:textSize="26sp" />
+
+                <TextView
+                    android:id="@+id/now_playing_artist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_above="@+id/play_pause"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:gravity="left"
+                    android:paddingBottom="8dp"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="1dp"
+                    android:singleLine="true"
+                    android:text="Deadmau5"
+                    android:textColor="#fff"
+                    android:textSize="16sp" />
+
+
+                <LinearLayout
+                    android:id="@+id/controls"
+                    android:layout_width="fill_parent"
+                    android:layout_height="80dp"
+                    android:orientation="horizontal"
+                    android:weightSum="5">
+
+
+                    <ImageView
+                        android:id="@+id/repeat_toggle"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:layout_weight="1"
+                        android:padding="22dp"
+                        android:paddingLeft="5dp"
+                        android:src="@mipmap/ic_repeat"
+                        android:tint="#fff" />
+
+                    <ImageView
+                        android:id="@+id/previous"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:layout_weight="1"
+                        android:padding="20dp"
+                        android:src="@drawable/ic_previous"
+                        android:tint="#fff" />
+
+                    <ImageView
+                        android:id="@+id/play_pause"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:layout_weight="1"
+                        android:padding="20dp"
+                        android:src="@drawable/ic_pause"
+                        android:tint="#fff" />
+
+                    <ImageView
+                        android:id="@+id/next"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:layout_weight="1"
+                        android:padding="20dp"
+                        android:src="@drawable/ic_next"
+                        android:tint="#fff" />
+
+                    <ImageView
+                        android:id="@+id/shuffle_toggle"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:layout_weight="1"
+                        android:padding="22dp"
+                        android:paddingRight="5dp"
+                        android:src="@mipmap/ic_shuffle"
+                        android:tint="#fff" />
+
+                </LinearLayout>
+
+
+                <LinearLayout
+                    android:id="@+id/timeControl"
+                    android:layout_width="fill_parent"
+                    android:layout_height="64dp"
+                    android:orientation="horizontal"
+                    android:weightSum="90">
+
+                    <TextView
+                        android:id="@+id/now_playing_curr_time"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
+                        android:layout_weight="40"
+                        android:gravity="right|center"
+                        android:text="00:00"
+                        android:textColor="#fff"
+                        android:textSize="12sp" />
+
+                    <app.minimize.com.seek_bar_compat.SeekBarCompat
+                        android:id="@+id/now_playing_slider"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
+                        android:layout_gravity="center"
+                        android:layout_weight="10"
+                        android:maxHeight="64dp"
+                        android:minHeight="64dp"
+                        app:progressBackgroundColor="#fff"
+                        app:thumbColor="#fff" />
+
+                    <TextView
+                        android:id="@+id/now_playing_total_time"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
+                        android:layout_weight="40"
+                        android:gravity="left|center"
+                        android:text="00:00"
+                        android:textColor="#fff"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+
+        </LinearLayout>
+
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/now_playing_preview"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_weight="0"
+        android:background="#212121"
+        android:visibility="visible">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!--<com.gc.materialdesign.views.ProgressBarDeterminate
+                android:id="@+id/now_playing_preview_progress"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/accent">
+
+            </com.gc.materialdesign.views.ProgressBarDeterminate>-->
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_toLeftOf="@+id/now_playing_preview_play_pause"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/now_playing_preview_title"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="left"
+                    android:paddingBottom="1dp"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="10dp"
+                    android:singleLine="true"
+                    android:text="Infra Turbo Pigcart Racer"
+                    android:textColor="#fff"
+                    android:textSize="22sp" />
+
+
+                <TextView
+                    android:id="@+id/now_playing_preview_artist"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="left"
+                    android:paddingBottom="8dp"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="1dp"
+                    android:singleLine="true"
+                    android:text="Deadmau5"
+                    android:textColor="#fff"
+                    android:textSize="14sp" />
+
+
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/now_playing_preview_play_pause"
+                android:layout_width="76dp"
+                android:layout_height="76dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:layout_gravity="right"
+                android:padding="15dp"
+                android:src="@drawable/ic_pause"
+                android:tint="#fff" />
+
+        </RelativeLayout>
+    </RelativeLayout>
+
+</android.support.v7.widget.CardView>
