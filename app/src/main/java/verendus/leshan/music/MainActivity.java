@@ -672,13 +672,13 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                 god.setSlider((SeekBarCompat) view.findViewById(R.id.now_playing_slider));
                 god.setPreview((RelativeLayout) view.findViewById(R.id.now_playing_preview));
 
-                god.setNowPlayingTitle(findViewById(R.id.now_playing_title));
-                god.setNowPlayingArtist(findViewById(R.id.now_playing_artist));
-                god.setRepeatButton(findViewById(R.id.repeat_toggle));
-                god.setPreviousButton(findViewById(R.id.previous));
-                god.setPauseButton(findViewById(R.id.play_pause));
-                god.setNextButton(findViewById(R.id.next));
-                god.setShuffleButton(findViewById(R.id.shuffle_toggle));
+                god.setNowPlayingTitle(view.findViewById(R.id.now_playing_title));
+                god.setNowPlayingArtist(view.findViewById(R.id.now_playing_artist));
+                god.setRepeatButton(view.findViewById(R.id.repeat_toggle));
+                god.setPreviousButton(view.findViewById(R.id.previous));
+                god.setPauseButton(view.findViewById(R.id.play_pause));
+                god.setNextButton(view.findViewById(R.id.next));
+                god.setShuffleButton(view.findViewById(R.id.shuffle_toggle));
 
 
                 LinearLayout linearLayout = (LinearLayout) view.findViewById(R.id.now_playing_layout);

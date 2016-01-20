@@ -105,11 +105,11 @@ public class God implements Serializable{
 
                         float x = slideOffset/1;
 
-                        nowPlayingTitle.setScaleX(x);
+                        /*nowPlayingTitle.setScaleX(x);
                         nowPlayingTitle.setScaleY(x);
 
                         nowPlayingArtist.setScaleX(x);
-                        nowPlayingArtist.setScaleY(x);
+                        nowPlayingArtist.setScaleY(x);*/
 
                         repeatButton.setScaleX(x);
                         repeatButton.setScaleY(x);
@@ -311,10 +311,12 @@ public class God implements Serializable{
     }
 
     public void setNowPlayingTitle(View nowPlayingTitle) {
+        nowPlayingTitle.setPivotX(0);
         this.nowPlayingTitle = nowPlayingTitle;
     }
 
     public void setNowPlayingArtist(View nowPlayingArtist) {
+        nowPlayingArtist.setPivotX(0);
         this.nowPlayingArtist = nowPlayingArtist;
     }
 

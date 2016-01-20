@@ -98,12 +98,12 @@ public class AlbumViewFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         rootView = inflater.inflate(R.layout.fragment_album_view, container, false);
-        rootView.setVisibility(View.GONE);
+        rootView.setVisibility(View.INVISIBLE);
 
         fab = (FloatingActionButton) rootView.findViewById(R.id.album_view_fab);
-        fab.setVisibility(View.GONE);
+        fab.hide();
         recyclerView = (RecyclerView) rootView.findViewById(R.id.album_view_song_list);
-        recyclerView.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.INVISIBLE);
         imageView = (SquaredImageView) rootView.findViewById(R.id.album_view_album_art);
         toolbar = (Toolbar) rootView.findViewById(R.id.album_view_toolbar);
         collapsingToolbarLayout = (CollapsingToolbarLayout) rootView.findViewById(R.id.album_view_collapsing_toolbar_layout);
@@ -222,25 +222,29 @@ public class AlbumViewFragment extends Fragment {
     }
 
     private void enterAnimation(){
-        rootView.setPivotX(0);
-        rootView.setPivotY(0);
-        ObjectAnimator moveX = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_X, startingX - width/2, 0);
-        ObjectAnimator moveY = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_Y, startingY - width/2, 0);
-
         WindowManager wm = (WindowManager) getView().getContext().getSystemService(Context.WINDOW_SERVICE);
         Display display = wm.getDefaultDisplay();
 
-        float width2 = (float) display.getWidth();
+        float screenWidth = (float) display.getWidth();
+        float screenHeight = (float) display.getHeight();
+
+        rootView.setPivotX(0);
+        rootView.setPivotY(0);
+        ObjectAnimator moveX = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_X, startingX, 0);
+        ObjectAnimator moveY = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_Y, startingY, 0);
+        //ObjectAnimator moveY = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_Y, screenHeight, 0);
+
+
 
         Log.d("WIDTH :", width+"");
-        Log.d("WIDTH2 :", width2+"");
+        Log.d("WIDTH2 :", screenWidth+"");
         Log.d("XXX :", startingX+"");
         Log.d("YYY :", startingY+"");
 
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(rootView, View.SCALE_X, (width / width2), 1);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(rootView, View.SCALE_Y, (width / width2), 1);
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(rootView, View.SCALE_X, (width / screenWidth), 1);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(rootView, View.SCALE_Y, (width / screenWidth), 1);
 
-        scaleY.addListener(new Animator.AnimatorListener() {
+        moveY.addListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
 
@@ -248,9 +252,10 @@ public class AlbumViewFragment extends Fragment {
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                fab.setVisibility(View.VISIBLE);
                 fab.show();
                 recyclerView.setVisibility(View.VISIBLE);
+                ObjectAnimator.ofFloat(recyclerView, View.ALPHA, 0, 1).start();
+                ObjectAnimator.ofFloat(recyclerView, View.TRANSLATION_Y, 100, 0).start();
             }
 
             @Override
@@ -264,7 +269,7 @@ public class AlbumViewFragment extends Fragment {
             }
         });
 
-        int duration = 3000;
+        int duration = 500;
         moveX.setDuration(duration);
         moveY.setDuration(duration);
         scaleX.setDuration(duration);
