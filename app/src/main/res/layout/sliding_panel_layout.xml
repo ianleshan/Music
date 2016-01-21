@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context="verendus.leshan.music.MainActivity">
 
-    <com.sothree.slidinguppanel.SlidingUpPanelLayout
+    <verendus.leshan.music.views.MySlidingUpLayout
         xmlns:sothree="http://schemas.android.com/apk/res-auto"
         android:id="@+id/sliding_layout"
         android:layout_width="match_parent"
@@ -21,7 +21,7 @@
         <include layout="@layout/level1" />
         <include layout="@layout/now_playing_pager" />
 
-    </com.sothree.slidinguppanel.SlidingUpPanelLayout>
+    </verendus.leshan.music.views.MySlidingUpLayout>
 
 
 

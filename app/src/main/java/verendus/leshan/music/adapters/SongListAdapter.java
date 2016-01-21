@@ -16,6 +16,7 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import java.util.ArrayList;
 
 import verendus.leshan.music.R;
+import verendus.leshan.music.objects.God;
 import verendus.leshan.music.objects.Song;
 
 /**
@@ -88,7 +89,7 @@ public class SongListAdapter extends RecyclerView.Adapter<SongListAdapter.Recycl
         holder.songView.setText(currSong.getTitle());
         holder.artistView.setText(currSong.getArtist());
         holder.albumArt.setImageBitmap(null);
-        imageLoader.displayImage(currSong.getCoverArt(), holder.albumArt);
+        imageLoader.displayImage(God.getAlbumFromName(currSong.getAlbum()).getCoverArt(), holder.albumArt);
         //set position as tag
         holder.itemView.setTag(position);
         //return songLay;

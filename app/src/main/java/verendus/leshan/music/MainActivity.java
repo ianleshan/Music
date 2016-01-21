@@ -30,6 +30,7 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -41,6 +42,7 @@ import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.nostra13.universalimageloader.core.assist.FailReason;
+import com.nostra13.universalimageloader.core.display.FadeInBitmapDisplayer;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
@@ -66,6 +68,7 @@ import verendus.leshan.music.objects.Song;
 import verendus.leshan.music.service.MusicChanger;
 import verendus.leshan.music.service.MusicService;
 import verendus.leshan.music.utils.XMLParser;
+import verendus.leshan.music.views.MySlidingUpLayout;
 import verendus.leshan.music.views.MyViewPager;
 
 public class MainActivity extends AppCompatActivity implements LibraryFragment.OnFragmentInteractionListener, MusicChanger {
@@ -87,8 +90,18 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
     RecyclerView queueList;
     QueueListAdapter.OnItemClickListener queueOnItemClickListener;
     RelativeLayout previewTemplate, level1Container, loadingScreen;
-    static SlidingUpPanelLayout slidingUpPanelLayout;
+    LinearLayout queueLayoutHeader;
+    static MySlidingUpLayout nowPlayingPanel, queueSlidingPanel;
     MyViewPager viewPager;
+    TextView songTitle, songArtist;
+
+    public static final String[] imageQualities = new String[]{ "small", "medium", "large", "extralarge", "mega"};
+    public static int SMALL = 0;
+    public static int MEDIUM = 1;
+    public static int LARGE = 2;
+    public static int EXTRA_LARGE = 3;
+    public static int MEGA = 4;
+    public static final String IMAGE_QUALITY = imageQualities[EXTRA_LARGE];
 
     static Typeface font;
     Typeface titleFont;
@@ -108,22 +121,89 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
         font = Typeface.createFromAsset(getAssets(), "font.ttf");
         titleFont = Typeface.createFromAsset(getAssets(), "titleFont.ttf");
 
+        songTitle = (TextView) findViewById(R.id.now_playing_title);
+        songArtist = (TextView) findViewById(R.id.now_playing_artist);
+        queueLayoutHeader = (LinearLayout) findViewById(R.id.queue_layout_header);
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer);
         navigationView = (NavigationView) findViewById(R.id.nav_view);
-        queueList = (RecyclerView) findViewById(R.id.queue_list);
+        queueList = (RecyclerView) findViewById(R.id.queue_layout_list);
         previewTemplate = (RelativeLayout) findViewById(R.id.preview_template);
         level1Container = (RelativeLayout) findViewById(R.id.level1_container);
         loadingScreen = (RelativeLayout) findViewById(R.id.loading_screen);
-        slidingUpPanelLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
+        nowPlayingPanel = (MySlidingUpLayout) findViewById(R.id.sliding_layout);
+        queueSlidingPanel = (MySlidingUpLayout) findViewById(R.id.queue_sliding_panel);
 
         God.overrideFonts(previewTemplate, font);
         God.overrideFonts(loadingScreen, font);
-        God.overrideFonts(slidingUpPanelLayout, font);
+        God.overrideFonts(nowPlayingPanel, font);
 
-        int height = previewTemplate.getMeasuredHeight();
-        slidingUpPanelLayout.setPanelHeight(height);
-        level1Container.setPadding(0, 0, 0, height);
-        slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+
+        int previewTemplateMeasuredHeight = previewTemplate.getMeasuredHeight();
+        int queueLayoutHeaderMeasuredHeight = queueLayoutHeader.getMeasuredHeight();
+
+        Log.d("MEASURED HEIGHT :", queueLayoutHeaderMeasuredHeight + "");
+
+        level1Container.setPadding(0, 0, 0, previewTemplateMeasuredHeight);
+
+        nowPlayingPanel.setPanelHeight(previewTemplateMeasuredHeight);
+        //queueSlidingPanel.setPanelHeight(queueLayoutHeaderMeasuredHeight);
+
+        nowPlayingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+        queueSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+
+        queueSlidingPanel.setPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
+            @Override
+            public void onPanelSlide(View panel, float slideOffset) {
+                nowPlayingPanel.setSlidingEnabled(false);
+            }
+
+            @Override
+            public void onPanelCollapsed(View panel) {
+                nowPlayingPanel.setSlidingEnabled(true);
+            }
+
+            @Override
+            public void onPanelExpanded(View panel) {
+                nowPlayingPanel.setSlidingEnabled(false);
+            }
+
+            @Override
+            public void onPanelAnchored(View panel) {
+
+            }
+
+            @Override
+            public void onPanelHidden(View panel) {
+
+            }
+        });
+        queueSlidingPanel.setScrollableView(queueList);
+        queueSlidingPanel.setDragView(queueLayoutHeader);
+        queueLayoutHeader.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+                switch (event.getAction()){
+
+                    case MotionEvent.ACTION_DOWN:
+
+                        nowPlayingPanel.setSlidingEnabled(false);
+
+                        break;
+
+                    case MotionEvent.ACTION_UP:
+
+                        if(queueSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED){
+                            nowPlayingPanel.setSlidingEnabled(true);
+                        }
+
+                        break;
+
+                }
+
+                return false;
+            }
+        });
 
         queueOnItemClickListener = new QueueListAdapter.OnItemClickListener() {
             @Override
@@ -142,6 +222,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                 .cacheOnDisc(true)
                 .showImageForEmptyUri(R.drawable.sample_art)
                 .showImageOnFail(R.drawable.sample_art)
+                .displayer(new FadeInBitmapDisplayer(200))
                 //.showImageOnLoading(R.drawable.sample_art)
                 .cacheOnDisk(true)
                 .build();
@@ -222,10 +303,10 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                 fragmentTransaction.commit();
 
                 int height = previewTemplate.getMeasuredHeight();
-                slidingUpPanelLayout.setPanelHeight(height);
+                nowPlayingPanel.setPanelHeight(height);
                 level1Container.setPadding(0, 0, 0, height);
-                slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
-                slidingUpPanelLayout.setPanelSlideListener(god.getPanelSlideListener());
+                nowPlayingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+                nowPlayingPanel.setPanelSlideListener(god.getPanelSlideListener());
                 god.setPreview(previewTemplate);
                 god.setNowPlayingStatusBar((RelativeLayout) findViewById(R.id.status_bar_color_2));
                 god.setLibraryStatusBar((RelativeLayout) findViewById(R.id.status_bar_color_1));
@@ -273,6 +354,8 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                     (MediaStore.Audio.Media.ARTIST);
             int albumColumn = musicCursor.getColumnIndex
                     (MediaStore.Audio.Media.ALBUM);
+            int trackColumn = musicCursor.getColumnIndex
+                    (MediaStore.Audio.Media.TRACK);
             int isAlarmID = musicCursor.getColumnIndex
                     (MediaStore.Audio.Media.IS_ALARM);
             int isNotificationID = musicCursor.getColumnIndex
@@ -291,6 +374,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                 String thisTitle = musicCursor.getString(titleColumn);
                 String thisArtist = musicCursor.getString(artistColumn);
                 String thisAlbum = musicCursor.getString(albumColumn);
+                int thisTrack = musicCursor.getInt(trackColumn);Log.d("TAG", thisTrack+"  ----  " + thisAlbum);
                 int thisDuration = musicCursor.getInt(durationColumn);
                 int thisDateAdded = musicCursor.getInt(dateAddedID);
                 boolean isAlarm = (musicCursor.getShort(isAlarmID) != 0);
@@ -334,7 +418,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                             thisAlbum,
                             thisArtist,
                             thisId,
-                            albumArtUri.toString(),
+                            getAlbumArt(thisAlbum, thisArtist, albumArtUri.toString()),
                             thisDuration,
                             thisDateAdded);
                     songs.add(song);
@@ -348,8 +432,9 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                     if (!isSOngAlreadyInAlbum) {
                         Album album = new Album(song.getAlbum(),
                                 song.getArtist(),
-                                //getAlbumArt(song.getAlbum(), song.getArtist()));
-                                albumArtUri.toString());
+                                //getAlbumArt(song.getAlbum(), song.getArtist(), albumArtUri.toString()));
+                                //albumArtUri.toString());
+                                song.getCoverArt());
                         album.addSong(song);
                         albums.add(album);
                     }
@@ -394,7 +479,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
                 String thisTitle = genreCursor.getString(titleColumn);
                 int genreID = genreCursor.getInt(genreIDColumn);
-                Log.d("GENRE :", thisTitle);
+                //Log.d("GENRE :", thisTitle);
                 Genre genre = new Genre(thisTitle);
 
                 Uri genreListUri = MediaStore.Audio.Genres.Members.getContentUri("external", genreID);
@@ -411,7 +496,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
                         String title = genreMembersCursor.getString(genreMemberTitleColumn);
                         songsInGenre.add(god.getSongFromName(title));
-                        Log.d("GENRE MEMBER :", title);
+                        //Log.d("GENRE MEMBER :", title);
 
                     }
                     while (genreMembersCursor.moveToNext());
@@ -445,7 +530,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
                 String thisTitle = playlistCursor.getString(titleColumn);
                 int playlistID = playlistCursor.getInt(playlistIDColumn);
-                Log.d("PLAYLIST :", thisTitle);
+                //Log.d("PLAYLIST :", thisTitle);
                 Playlist playlist = new Playlist(thisTitle);
 
                 Uri playlistUri = MediaStore.Audio.Playlists.Members.getContentUri("external", playlistID);
@@ -462,7 +547,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
                         String title = playlistMembersCursor.getString(playlistMemberTitleColumn);
                         songsInPlaylist.add(god.getSongFromName(title));
-                        Log.d("PLAYLIST MEMBER :", title);
+                        //Log.d("PLAYLIST MEMBER :", title);
 
                     }
                     while (playlistMembersCursor.moveToNext());
@@ -494,7 +579,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                     + URLEncoder.encode(artist)
                     + "&api_key="
                     + "81f683d158289972f4532a1aefc70e48";
-            Log.d("AAAERTIST", x);
+            //Log.d("AAAERTIST", x);
             try {
                 XMLParser parser = new XMLParser();
                 String xml = parser.getXmlFromUrl(x); // getting XML from URL
@@ -502,7 +587,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                 NodeList nl = doc.getElementsByTagName("image");
                 //for (int i = 0; i < nl.getLength(); i++) {
                 Element e = (Element) nl.item(3);
-                if (e.getAttribute("size").contentEquals("extralarge")) {
+                if (e.getAttribute("size").contentEquals(IMAGE_QUALITY)) {
                     //Log.d("TAG", "ELEMENT" + i + "... Size = " + e.getAttribute("size") + " = " + parser.getElementValue(e));
                     albumArtUrl = parser.getElementValue(e);
                 }
@@ -520,39 +605,56 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
     }
 
-    private String getAlbumArt(String album, String artist) {
+    private String getAlbumArt(String album, String artist, String loacalArt) {
+
+        //if(loacalArt != null)return loacalArt;
 
         String albumArtUrl = null;
         String x = null;
 
-        try {
-            StringBuilder stringBuilder = new StringBuilder("http://ws.audioscrobbler.com/2.0/");
-            stringBuilder.append("?method=album.getinfo");
-            stringBuilder.append("&api_key=");
-            stringBuilder.append("81f683d158289972f4532a1aefc70e48");
-            stringBuilder.append("&artist=" + URLEncoder.encode(artist, "UTF-8"));
-            stringBuilder.append("&album=" + URLEncoder.encode(album, "UTF-8"));
-            x = stringBuilder.toString();
-            Log.d("UURRLL", x);
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+        SharedPreferences prefs = getSharedPreferences("albumArt", MODE_PRIVATE);
+        albumArtUrl = prefs.getString(album, null);
+
+        if(albumArtUrl != null){
+            return albumArtUrl;
+        }else {
+
+
+            try {
+                StringBuilder stringBuilder = new StringBuilder("http://ws.audioscrobbler.com/2.0/");
+                stringBuilder.append("?method=album.getinfo");
+                stringBuilder.append("&api_key=");
+                stringBuilder.append("81f683d158289972f4532a1aefc70e48");
+                stringBuilder.append("&artist=" + URLEncoder.encode(artist, "UTF-8"));
+                stringBuilder.append("&album=" + URLEncoder.encode(album, "UTF-8"));
+                x = stringBuilder.toString();
+                //Log.d("UURRLL", x);
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                XMLParser parser = new XMLParser();
+                String xml = parser.getXmlFromUrl(x); // getting XML from URL
+                Document doc = parser.getDomElement(xml);
+                NodeList nl = doc.getElementsByTagName("image");
+                for (int i = 0; i < nl.getLength(); i++) {
+                    Element e = (Element) nl.item(i);
+                    //Log.d("TAG", "Size = " + e.getAttribute("size") + " = " + parser.getElementValue(e));
+                    if (e.getAttribute("size").contentEquals(IMAGE_QUALITY)) {
+                        albumArtUrl = parser.getElementValue(e);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
-        try {
-            XMLParser parser = new XMLParser();
-            String xml = parser.getXmlFromUrl(x); // getting XML from URL
-            Document doc = parser.getDomElement(xml);
-            NodeList nl = doc.getElementsByTagName("image");
-            for (int i = 0; i < nl.getLength(); i++) {
-                Element e = (Element) nl.item(i);
-                //Log.d("TAG", "Size = " + e.getAttribute("size") + " = " + parser.getElementValue(e));
-                if (e.getAttribute("size").contentEquals("extralarge")) {
-                    albumArtUrl = parser.getElementValue(e);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        SharedPreferences.Editor editor = getSharedPreferences("albumArt", MODE_PRIVATE).edit();
+        editor.putString(album, albumArtUrl);
+        editor.commit();
+
+
         return albumArtUrl;
 
     }
@@ -632,6 +734,10 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
     public void onPlay(final int position, boolean isNewQueue) {
 
         Log.d("LOCATING BUG :", "onPlay method");
+
+        Song song = musicService.getQueue().get(position);
+        songTitle.setText(song.getTitle());
+        songArtist.setText(song.getArtist());
 
         if (isNewQueue) {
             NowPlayingViewPagerAdapter viewPagerAdapter = new NowPlayingViewPagerAdapter(getSupportFragmentManager());
@@ -800,7 +906,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
         ImageView playPause, next, previous, albumArt, previewPlayPause, shuffleTogle, repeatToggle;
         RelativeLayout preview, dividerBar;
         LinearLayout nowPlayingLayout;
-        TextView title, artist, totalTime, currentTime, previewTitle, previewArtist;
+        TextView totalTime, currentTime, previewTitle, previewArtist;
         SeekBarCompat slider;
         //ProgressBarDeterminate previewProgress;
 
@@ -822,8 +928,8 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             shuffleTogle = (ImageView) rootView.findViewById(R.id.shuffle_toggle);
             nowPlayingLayout = (LinearLayout) rootView.findViewById(R.id.now_playing_layout);
             dividerBar = (RelativeLayout) rootView.findViewById(R.id.divider_bar);
-            title = (TextView) rootView.findViewById(R.id.now_playing_title);
-            artist = (TextView) rootView.findViewById(R.id.now_playing_artist);
+            //title = (TextView) rootView.findViewById(R.id.now_playing_title);
+            //artist = (TextView) rootView.findViewById(R.id.now_playing_artist);
             totalTime = (TextView) rootView.findViewById(R.id.now_playing_total_time);
             currentTime = (TextView) rootView.findViewById(R.id.now_playing_curr_time);
             slider = (SeekBarCompat) rootView.findViewById(R.id.now_playing_slider);
@@ -834,8 +940,8 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             previewPlayPause = (ImageView) rootView.findViewById(R.id.now_playing_preview_play_pause);
             //previewProgress = (ProgressBarDeterminate) rootView.findViewById(R.id.now_playing_preview_progress);
 
-            title.setText(song.getTitle());
-            artist.setText(song.getArtist());
+            //title.setText(song.getTitle());
+            //artist.setText(song.getArtist());
 
             previewTitle.setText(song.getTitle());
             previewArtist.setText(song.getArtist());
@@ -867,10 +973,22 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             preview.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    SlidingUpPanelLayout.PanelState panelState = slidingUpPanelLayout.getPanelState();
+                    SlidingUpPanelLayout.PanelState panelState = nowPlayingPanel.getPanelState();
                     if (panelState == SlidingUpPanelLayout.PanelState.COLLAPSED) {
-                        slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+                        nowPlayingPanel.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
                     }
+                }
+            });
+
+            preview.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    SlidingUpPanelLayout.PanelState panelState = nowPlayingPanel.getPanelState();
+                    if (panelState == SlidingUpPanelLayout.PanelState.COLLAPSED) {
+                        nowPlayingPanel.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+                        queueSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+                    }
+                    return false;
                 }
             });
 
@@ -964,7 +1082,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
             nowPlayingLayout.setBackgroundColor(swatch.getRgb());
             nowPlayingLayout.setTag(swatch.getRgb());
-            title.setTextColor(swatch.getTitleTextColor());
+            //title.setTextColor(swatch.getTitleTextColor());
             currentTime.setTextColor(swatch.getTitleTextColor());
             totalTime.setTextColor(swatch.getTitleTextColor());
 
@@ -976,14 +1094,14 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
             int intColor = swatch.getBodyTextColor();
             int noAlphaColor = Color.argb(255, Color.red(intColor), Color.green(intColor), Color.blue(intColor));
-            slider.setProgressColor(noAlphaColor);
+            slider.setProgressColor(Color.TRANSPARENT);
             slider.setThumbColor(noAlphaColor);
-            slider.setProgressBackgroundColor(noAlphaColor);
+            slider.setProgressBackgroundColor(Color.TRANSPARENT);
             slider.setAlpha(Color.alpha(intColor) / 255f);
 
-            Log.d("HEX-COLOR", Color.alpha(intColor) + " / 255 = " + (Color.alpha(intColor) / 255f));
+            //Log.d("HEX-COLOR", Color.alpha(intColor) + " / 255 = " + (Color.alpha(intColor) / 255f));
 
-            artist.setTextColor(swatch.getBodyTextColor());
+            //artist.setTextColor(swatch.getBodyTextColor());
             dividerBar.setBackgroundColor(swatch.getTitleTextColor());
 
             playPause.setColorFilter(swatch.getTitleTextColor(), PorterDuff.Mode.SRC_IN);
@@ -999,8 +1117,12 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
     @Override
     public void onBackPressed() {
 
-        if (slidingUpPanelLayout.getPanelState().equals(SlidingUpPanelLayout.PanelState.EXPANDED)) {
-            slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+        if (nowPlayingPanel.getPanelState().equals(SlidingUpPanelLayout.PanelState.EXPANDED)) {
+            if (queueSlidingPanel.getPanelState().equals(SlidingUpPanelLayout.PanelState.EXPANDED)) {
+                queueSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+            }else {
+                nowPlayingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+            }
         } else {
             super.onBackPressed();
         }

@@ -95,28 +95,6 @@
 
 
 
-    <com.sothree.slidinguppanel.SlidingUpPanelLayout
-        xmlns:sothree="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/queue_sliding_panel"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="bottom"
-        sothree:umanoPanelHeight="58dp"
-        sothree:umanoShadowHeight="0dp"
-        sothree:umanoOverlay="true"
-        sothree:umanoInitialState="collapsed">
-
-
-        <verendus.leshan.music.views.MyViewPager
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/now_playing_view_pager">
-
-        </verendus.leshan.music.views.MyViewPager>
-
-        <include layout="@layout/queue_layout"/>
-
-
-    </com.sothree.slidinguppanel.SlidingUpPanelLayout>
+    <include layout="@layout/queue_layout"/>
 
 </RelativeLayout>
