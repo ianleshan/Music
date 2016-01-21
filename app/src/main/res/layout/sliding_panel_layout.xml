@@ -12,7 +12,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="bottom"
-        sothree:umanoScrollableView="@id/queue_list"
         sothree:umanoPanelHeight="68dp"
         sothree:umanoShadowHeight="4dp"
         sothree:umanoOverlay="true"
@@ -20,7 +19,7 @@
         >
 
         <include layout="@layout/level1" />
-        <include layout="@layout/queue_drawer_layout" />
+        <include layout="@layout/now_playing_pager" />
 
     </com.sothree.slidinguppanel.SlidingUpPanelLayout>
 

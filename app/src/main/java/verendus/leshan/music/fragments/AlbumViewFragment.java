@@ -2,6 +2,7 @@ package verendus.leshan.music.fragments;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
@@ -231,8 +232,16 @@ public class AlbumViewFragment extends Fragment {
         rootView.setPivotX(0);
         rootView.setPivotY(0);
         ObjectAnimator moveX = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_X, startingX, 0);
-        ObjectAnimator moveY = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_Y, startingY, 0);
+        ObjectAnimator moveY = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_Y, startingY - 50, 0);
         //ObjectAnimator moveY = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_Y, screenHeight, 0);
+
+        moveY.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float value = animation.getAnimatedFraction();
+                Log.d("VALUE", value + "");
+            }
+        });
 
 
 
@@ -269,7 +278,84 @@ public class AlbumViewFragment extends Fragment {
             }
         });
 
-        int duration = 500;
+        int duration = 400;
+        moveX.setDuration(duration);
+        moveY.setDuration(duration);
+        scaleX.setDuration(duration);
+        scaleY.setDuration(duration);
+
+        moveX.setInterpolator(interpolator);
+        moveY.setInterpolator(interpolator);
+        scaleX.setInterpolator(interpolator);
+        scaleY.setInterpolator(interpolator);
+
+        rootView.setVisibility(View.VISIBLE);
+        moveX.start();
+        moveY.start();
+        scaleX.start();
+        scaleY.start();
+    }
+
+    private void exitAnimation(){
+        WindowManager wm = (WindowManager) getView().getContext().getSystemService(Context.WINDOW_SERVICE);
+        Display display = wm.getDefaultDisplay();
+
+        float screenWidth = (float) display.getWidth();
+        float screenHeight = (float) display.getHeight();
+
+        rootView.setPivotX(0);
+        rootView.setPivotY(0);
+        ObjectAnimator moveX = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_X, 0, startingX);
+        ObjectAnimator moveY = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_Y, 0, startingY - 50);
+        //ObjectAnimator moveY = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_Y, screenHeight, 0);
+
+        moveY.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float value = animation.getAnimatedFraction();
+                Log.d("VALUE", value + "");
+            }
+        });
+
+
+
+        Log.d("WIDTH :", width+"");
+        Log.d("WIDTH2 :", screenWidth+"");
+        Log.d("XXX :", startingX+"");
+        Log.d("YYY :", startingY+"");
+
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(rootView, View.SCALE_X, 1, (width / screenWidth));
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(rootView, View.SCALE_Y, 1, (width / screenWidth));
+
+        moveY.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                fab.show();
+                recyclerView.setVisibility(View.VISIBLE);
+
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
+            }
+        });
+
+
+        ObjectAnimator.ofFloat(recyclerView, View.ALPHA, 0, 1).start();
+        ObjectAnimator.ofFloat(recyclerView, View.TRANSLATION_Y, 100, 0).start();
+
+        int duration = 400;
         moveX.setDuration(duration);
         moveY.setDuration(duration);
         scaleX.setDuration(duration);

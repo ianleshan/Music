@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
     private boolean musicBound = false;
 
     DrawerLayout drawerLayout;
-    NavigationView navigationView, queueNavigationView;
+    NavigationView navigationView;
     RecyclerView queueList;
     QueueListAdapter.OnItemClickListener queueOnItemClickListener;
     RelativeLayout previewTemplate, level1Container, loadingScreen;
@@ -110,7 +110,6 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer);
         navigationView = (NavigationView) findViewById(R.id.nav_view);
-        queueNavigationView = (NavigationView) findViewById(R.id.queue_nav_view);
         queueList = (RecyclerView) findViewById(R.id.queue_list);
         previewTemplate = (RelativeLayout) findViewById(R.id.preview_template);
         level1Container = (RelativeLayout) findViewById(R.id.level1_container);
@@ -672,8 +671,8 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                 god.setSlider((SeekBarCompat) view.findViewById(R.id.now_playing_slider));
                 god.setPreview((RelativeLayout) view.findViewById(R.id.now_playing_preview));
 
-                god.setNowPlayingTitle(view.findViewById(R.id.now_playing_title));
-                god.setNowPlayingArtist(view.findViewById(R.id.now_playing_artist));
+                //god.setNowPlayingTitle(view.findViewById(R.id.now_playing_title));
+                //god.setNowPlayingArtist(view.findViewById(R.id.now_playing_artist));
                 god.setRepeatButton(view.findViewById(R.id.repeat_toggle));
                 god.setPreviousButton(view.findViewById(R.id.previous));
                 god.setPauseButton(view.findViewById(R.id.play_pause));
