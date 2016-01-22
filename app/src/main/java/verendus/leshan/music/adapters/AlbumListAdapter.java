@@ -23,6 +23,7 @@ import java.util.ArrayList;
 
 import verendus.leshan.music.objects.Album;
 import verendus.leshan.music.R;
+import verendus.leshan.music.views.SquaredImageView;
 
 /**
  * Created by leshan on 9/3/15.
@@ -44,13 +45,14 @@ public class AlbumListAdapter extends RecyclerView.Adapter<AlbumListAdapter.Albu
     public static class AlbumViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         TextView albumName, artistName;
         CardView cardView;
-        ImageView albumCover, moreIcon;
+        SquaredImageView albumCover;
+        ImageView moreIcon;
 
         AlbumViewHolder(View itemView) {
             super(itemView);
             albumName = (TextView) itemView.findViewById(R.id.album_temp_album);
             artistName = (TextView) itemView.findViewById(R.id.album_temp_artist);
-            albumCover = (ImageView) itemView.findViewById(R.id.album_temp_art);
+            albumCover = (SquaredImageView) itemView.findViewById(R.id.album_temp_art);
             cardView = (CardView) itemView.findViewById(R.id.album_temp_card_view);
             moreIcon = (ImageView) itemView.findViewById(R.id.album_temp_more);
             itemView.setOnClickListener(AlbumViewHolder.this);
@@ -99,6 +101,7 @@ public class AlbumListAdapter extends RecyclerView.Adapter<AlbumListAdapter.Albu
         holder.albumName.setText(album.getName());
         holder.artistName.setText(album.getArtist());
         holder.albumCover.setImageBitmap(null);
+        holder.albumCover.setSampleSize(holder.itemView.getWidth());
         if (album.getCoverArt() == null)
             album.setCoverArt("drawable://" + R.drawable.sample_art);
         //Log.d("TAAAAAAAAAG!!", album.getCoverArt());

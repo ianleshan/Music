@@ -70,6 +70,7 @@ import verendus.leshan.music.service.MusicService;
 import verendus.leshan.music.utils.XMLParser;
 import verendus.leshan.music.views.MySlidingUpLayout;
 import verendus.leshan.music.views.MyViewPager;
+import verendus.leshan.music.views.SquaredImageView;
 
 public class MainActivity extends AppCompatActivity implements LibraryFragment.OnFragmentInteractionListener, MusicChanger {
 
@@ -93,7 +94,8 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
     LinearLayout queueLayoutHeader;
     static MySlidingUpLayout nowPlayingPanel, queueSlidingPanel;
     MyViewPager viewPager;
-    TextView songTitle, songArtist;
+    TextView songTitle, songArtist, drawerHeaderTitle;
+    SquaredImageView drawerHeaderImage;
 
     public static final String[] imageQualities = new String[]{ "small", "medium", "large", "extralarge", "mega"};
     public static int SMALL = 0;
@@ -126,6 +128,8 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
         queueLayoutHeader = (LinearLayout) findViewById(R.id.queue_layout_header);
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer);
         navigationView = (NavigationView) findViewById(R.id.nav_view);
+        drawerHeaderImage = (SquaredImageView) navigationView.getHeaderView(0).findViewById(R.id.drawer_header_image);
+        drawerHeaderTitle = (TextView) navigationView.getHeaderView(0).findViewById(R.id.drawer_header_title);
         queueList = (RecyclerView) findViewById(R.id.queue_layout_list);
         previewTemplate = (RelativeLayout) findViewById(R.id.preview_template);
         level1Container = (RelativeLayout) findViewById(R.id.level1_container);
@@ -136,7 +140,15 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
         God.overrideFonts(previewTemplate, font);
         God.overrideFonts(loadingScreen, font);
         God.overrideFonts(nowPlayingPanel, font);
+        drawerHeaderTitle.setTypeface(titleFont);
 
+        drawerHeaderImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                drawerLayout.closeDrawers();
+                nowPlayingPanel.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+            }
+        });
 
         int previewTemplateMeasuredHeight = previewTemplate.getMeasuredHeight();
         int queueLayoutHeaderMeasuredHeight = queueLayoutHeader.getMeasuredHeight();
@@ -219,7 +231,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
     private void createImageLoader() {
         DisplayImageOptions defaultOptions = new DisplayImageOptions.Builder()
-                .cacheOnDisc(true)
+                .cacheOnDisk(true)
                 .showImageForEmptyUri(R.drawable.sample_art)
                 .showImageOnFail(R.drawable.sample_art)
                 .displayer(new FadeInBitmapDisplayer(200))
@@ -228,8 +240,8 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                 .build();
 
         ImageLoaderConfiguration configuration = new ImageLoaderConfiguration.Builder(this)
-                .defaultDisplayImageOptions(defaultOptions).
-                        denyCacheImageMultipleSizesInMemory()
+                .defaultDisplayImageOptions(defaultOptions)
+                //.denyCacheImageMultipleSizesInMemory()
                 .build();
 
         ImageLoader.getInstance().init(configuration);
@@ -738,6 +750,8 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
         Song song = musicService.getQueue().get(position);
         songTitle.setText(song.getTitle());
         songArtist.setText(song.getArtist());
+        drawerHeaderTitle.setText(song.getTitle());
+        imageLoader.displayImage(song.getCoverArt(), drawerHeaderImage);
 
         if (isNewQueue) {
             NowPlayingViewPagerAdapter viewPagerAdapter = new NowPlayingViewPagerAdapter(getSupportFragmentManager());
@@ -904,7 +918,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
         int position;
 
         ImageView playPause, next, previous, albumArt, previewPlayPause, shuffleTogle, repeatToggle;
-        RelativeLayout preview, dividerBar;
+        RelativeLayout preview;
         LinearLayout nowPlayingLayout;
         TextView totalTime, currentTime, previewTitle, previewArtist;
         SeekBarCompat slider;
@@ -918,6 +932,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             View rootView = inflater.inflate(R.layout.now_playing, container, false);
             rootView.setTag(position);
 
+            if(musicService == null)return rootView;
             final Song song = musicService.getQueue().get(position);
 
             albumArt = (ImageView) rootView.findViewById(R.id.now_playing_albumart);
@@ -927,7 +942,6 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             repeatToggle = (ImageView) rootView.findViewById(R.id.repeat_toggle);
             shuffleTogle = (ImageView) rootView.findViewById(R.id.shuffle_toggle);
             nowPlayingLayout = (LinearLayout) rootView.findViewById(R.id.now_playing_layout);
-            dividerBar = (RelativeLayout) rootView.findViewById(R.id.divider_bar);
             //title = (TextView) rootView.findViewById(R.id.now_playing_title);
             //artist = (TextView) rootView.findViewById(R.id.now_playing_artist);
             totalTime = (TextView) rootView.findViewById(R.id.now_playing_total_time);
@@ -1102,7 +1116,6 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             //Log.d("HEX-COLOR", Color.alpha(intColor) + " / 255 = " + (Color.alpha(intColor) / 255f));
 
             //artist.setTextColor(swatch.getBodyTextColor());
-            dividerBar.setBackgroundColor(swatch.getTitleTextColor());
 
             playPause.setColorFilter(swatch.getTitleTextColor(), PorterDuff.Mode.SRC_IN);
             next.setColorFilter(swatch.getTitleTextColor(), PorterDuff.Mode.SRC_IN);

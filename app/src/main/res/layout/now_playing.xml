@@ -21,36 +21,30 @@
             android:orientation="vertical"
             android:visibility="visible">
 
-            <ImageView
+            <verendus.leshan.music.views.SquaredImageView
                 android:id="@+id/now_playing_albumart"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
-                android:layout_weight="1"
+                android:layout_weight="0"
                 android:scaleType="centerCrop"
                 android:src="@drawable/sample_art" />
 
             <LinearLayout
                 android:id="@+id/now_playing_layout"
                 android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="0"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
                 android:background="#212121"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:paddingBottom="98dp">
 
-                <RelativeLayout
-                    android:id="@+id/divider_bar"
-                    android:layout_width="fill_parent"
-                    android:layout_height="@dimen/divider_bar"
-                    android:background="#fff"
-                    android:visibility="gone">
-
-                </RelativeLayout>
 
                 <LinearLayout
                     android:id="@+id/timeControl"
                     android:layout_width="fill_parent"
                     android:layout_height="26dp"
                     android:orientation="horizontal"
+                    android:layout_weight="0"
                     android:weightSum="90"
                     android:background="#20000000">
 
@@ -93,8 +87,10 @@
                 <LinearLayout
                     android:id="@+id/controls"
                     android:layout_width="fill_parent"
-                    android:layout_height="80dp"
+                    android:layout_height="match_parent"
                     android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_weight="1"
                     android:weightSum="5">
 
 
@@ -150,7 +146,7 @@
 
 
 
-                <TextView
+                <!--<TextView
                     android:visibility="invisible"
                     android:id="@+id/now_playing_title_1"
                     android:layout_width="wrap_content"
@@ -184,7 +180,7 @@
                     android:singleLine="true"
                     android:text="Deadmau5"
                     android:textColor="#fff"
-                    android:textSize="16sp" />
+                    android:textSize="16sp" />-->
 
             </LinearLayout>
 
