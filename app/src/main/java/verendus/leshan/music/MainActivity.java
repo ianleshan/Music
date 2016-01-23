@@ -20,6 +20,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
@@ -28,6 +29,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -172,6 +174,11 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             @Override
             public void onPanelCollapsed(View panel) {
                 nowPlayingPanel.setSlidingEnabled(true);
+                if(musicService.getPosition() >= musicService.getQueue().size()){
+                    queueList.scrollToPosition(musicService.getPosition() + 1);
+                }else {
+                    queueList.scrollToPosition(musicService.getPosition() + 1);
+                }
             }
 
             @Override
@@ -226,7 +233,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
         god = new God(this);
 
-        loadData();
+        if(!god.isDataLoaded())loadData();
     }
 
     private void createImageLoader() {
@@ -288,7 +295,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
                 loadPlaylists();
                 god.setPlaylists(playlists);
-
+                god.dataLoaded();
                 return "Executed";
             }
 
@@ -619,7 +626,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
     private String getAlbumArt(String album, String artist, String loacalArt) {
 
-        //if(loacalArt != null)return loacalArt;
+        if(loacalArt != null)return loacalArt;
 
         String albumArtUrl = null;
         String x = null;
@@ -754,7 +761,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
         imageLoader.displayImage(song.getCoverArt(), drawerHeaderImage);
 
         if (isNewQueue) {
-            NowPlayingViewPagerAdapter viewPagerAdapter = new NowPlayingViewPagerAdapter(getSupportFragmentManager());
+            final NowPlayingViewPagerAdapter viewPagerAdapter = new NowPlayingViewPagerAdapter(getSupportFragmentManager());
             viewPager = (MyViewPager) findViewById(R.id.now_playing_view_pager);
             viewPager.removeOnPageChangeListener(onPageChangeListener);
             if (viewPager != null) {
@@ -770,13 +777,38 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             QueueListAdapter recyclerViewAdapter = new QueueListAdapter(getApplicationContext(), musicService.getQueue(), imageLoader);
             recyclerViewAdapter.setOnItemClickListener(queueOnItemClickListener);
             queueList.setAdapter(recyclerViewAdapter);
+
+            ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+                @Override
+                public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+                    return false;
+                }
+
+                @Override
+                public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
+                    //Remove swiped item from list and notify the RecyclerView
+                    musicService.removeSongFromQueue(viewHolder.getAdapterPosition());
+                    queueList.getAdapter().notifyItemRemoved(viewHolder.getAdapterPosition());
+                    viewPager.getAdapter().notifyDataSetChanged();
+                }
+            };
+
+            ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
+            itemTouchHelper.attachToRecyclerView(queueList);
         } else {
 
-            Log.d("HERE  :::", "HERE");
+            //Log.d("HERE  :::", "HERE");
             if (viewPager != null) {
                 viewPager.setCurrentItem(position, true);
             }
 
+        }
+        if(queueSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED){
+            if(position >= musicService.getQueue().size()){
+                queueList.scrollToPosition(position + 1);
+            }else {
+                queueList.scrollToPosition(position + 1);
+            }
         }
         Thread thread = new Thread(new Runnable() {
             public void run() {
@@ -797,6 +829,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                 god.setPreviousButton(view.findViewById(R.id.previous));
                 god.setPauseButton(view.findViewById(R.id.play_pause));
                 god.setNextButton(view.findViewById(R.id.next));
+                god.setTimeControl(view.findViewById(R.id.timeControl));
                 god.setShuffleButton(view.findViewById(R.id.shuffle_toggle));
 
 
@@ -928,7 +961,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle bundle) {
             position = getArguments().getInt("TYPE");
-            Log.d("LOCATING BUG :", "Creating SongFragment number - " + position);
+            //Log.d("LOCATING BUG :", "Creating SongFragment number - " + position);
             View rootView = inflater.inflate(R.layout.now_playing, container, false);
             rootView.setTag(position);
 
@@ -1143,7 +1176,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
     @Override
     protected void onDestroy() {
-        stopService(playIntent);
+        //stopService(playIntent);
         musicService = null;
         super.onDestroy();
     }

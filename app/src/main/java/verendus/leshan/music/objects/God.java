@@ -1,5 +1,6 @@
 package verendus.leshan.music.objects;
 
+import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.support.v4.view.ViewPager;
@@ -35,6 +36,8 @@ public class God implements Serializable{
     static ArrayList<Artist> artists = new ArrayList<>();
     static ArrayList<Genre> genres = new ArrayList<>();
     static ArrayList<Playlist> playlists = new ArrayList<>();
+    boolean isDataLoaded = false;
+
     final static int DEFAULT = 0xFF424242;
 
     DrawerLayout drawerLayout;
@@ -46,6 +49,9 @@ public class God implements Serializable{
 
     View nowPlayingTitle, nowPlayingArtist;
     View repeatButton, previousButton, pauseButton, nextButton, shuffleButton;
+    View timeControl;
+
+    ObjectAnimator nowPlayingAnimation;
 
     //ProgressBarDeterminate progressBarDeterminate;
 
@@ -59,7 +65,15 @@ public class God implements Serializable{
     }
 
     public void setNowPlayingStatusBar(RelativeLayout nowPlayingStatusBar) {
+        //nowPlayingStatusBar.setAlpha(0);
+        nowPlayingAnimation = ObjectAnimator.ofFloat(nowPlayingStatusBar, View.ALPHA, 0, 1);
+        nowPlayingAnimation.setCurrentFraction(0f);
         this.nowPlayingStatusBar = nowPlayingStatusBar;
+    }
+
+    public void setTimeControl(View timeControl) {
+        timeControl.setPivotY(0);
+        this.timeControl = timeControl;
     }
 
     public void setLibraryStatusBarColor(int color) {
@@ -88,22 +102,25 @@ public class God implements Serializable{
             @Override
             public void onPanelSlide(View panel, float slideOffset) {
 
+                //Log.d("NOW PLAYING SLIDEOFFSET", slideOffset + "");
                 if(preview != null){
                     preview.setVisibility(View.VISIBLE);
                     preview.setAlpha(1 - (slideOffset*5));
                 }
 
                 if(nowPlayingStatusBar != null) {
-                    float limit = .8f;
+                    float limit = .9f;
                     if (slideOffset < limit) {
-                        nowPlayingStatusBar.setAlpha(0);
+                        nowPlayingAnimation.setCurrentFraction(0f);
                     } else {
-                        nowPlayingStatusBar.setAlpha(slideOffset);
+                        float y = slideOffset - limit;
+                        float x = y/(1-limit);
+                        nowPlayingAnimation.setCurrentFraction(x);
+                        //nowPlayingStatusBar.setAlpha(x);
                     }
 
                     if(shuffleButton != null) {
 
-                        float x = slideOffset/1;
 
                         /*nowPlayingTitle.setScaleX(x);
                         nowPlayingTitle.setScaleY(x);
@@ -111,29 +128,29 @@ public class God implements Serializable{
                         nowPlayingArtist.setScaleX(x);
                         nowPlayingArtist.setScaleY(x);*/
 
-                        repeatButton.setScaleX(x);
-                        repeatButton.setScaleY(x);
+                        repeatButton.setScaleX(factor(slideOffset ,.4f));
+                        repeatButton.setScaleY(factor(slideOffset ,.4f));
 
-                        previousButton.setScaleX(x);
-                        previousButton.setScaleY(x);
+                        previousButton.setScaleX(factor(slideOffset ,.5f));
+                        previousButton.setScaleY(factor(slideOffset ,.5f));
 
-                        pauseButton.setScaleX(x);
-                        pauseButton.setScaleY(x);
+                        pauseButton.setScaleX(factor(slideOffset ,.6f));
+                        pauseButton.setScaleY(factor(slideOffset ,.6f));
 
-                        nextButton.setScaleX(x);
-                        nextButton.setScaleY(x);
+                        nextButton.setScaleX(factor(slideOffset ,.7f));
+                        nextButton.setScaleY(factor(slideOffset ,.7f));
 
-                        shuffleButton.setScaleX(x);
-                        shuffleButton.setScaleY(x);
+                        shuffleButton.setScaleX(factor(slideOffset ,.8f));
+                        shuffleButton.setScaleY(factor(slideOffset ,.8f));
 
-                        currentTime.setScaleX(x);
-                        currentTime.setScaleY(x);
+                        currentTime.setScaleX(factor(slideOffset ,.75f));
+                        currentTime.setScaleY(factor(slideOffset ,.75f));
 
-                        slider.setScaleX(x);
-                        slider.setScaleY(x);
+                        //slider.setScaleX(x);
+                        timeControl.setScaleY(factor(slideOffset ,.75f));
 
-                        totalTime.setScaleX(x);
-                        totalTime.setScaleY(x);
+                        totalTime.setScaleX(factor(slideOffset ,.75f));
+                        totalTime.setScaleY(factor(slideOffset ,.75f));
                     }
 
 
@@ -166,6 +183,17 @@ public class God implements Serializable{
             }
         };
 
+    }
+
+    private float factor(float slideOffset, float v) {
+        float x;
+        if (slideOffset < v) {
+            x = 0;
+        } else {
+            float y = slideOffset - v;
+            x = y/(1-v);
+        }
+        return x;
     }
 
     public ViewPager getNowPlayingViewPager() {
@@ -426,6 +454,9 @@ public class God implements Serializable{
         ImageLoader.getInstance().init(configuration);**/
         return ImageLoader.getInstance();
     }
+
+    public boolean isDataLoaded(){return isDataLoaded;}
+    public void dataLoaded(){isDataLoaded = true;}
 
     public static Artist getArtistFromName(String artistName) {
 

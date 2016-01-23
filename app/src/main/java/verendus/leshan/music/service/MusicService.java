@@ -28,6 +28,7 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
@@ -125,6 +126,7 @@ public class MusicService extends Service implements
                         if (mediaPlayer == null) initMediaPlayer();
                         else if (!mediaPlayer.isPlaying()) mediaPlayer.start();
                         mediaPlayer.setVolume(1.0f, 1.0f);
+                        Toast.makeText(getApplicationContext(),"Audio focus gained", Toast.LENGTH_SHORT).show();
                         break;
 
                     case AudioManager.AUDIOFOCUS_LOSS:
@@ -132,6 +134,7 @@ public class MusicService extends Service implements
                         if (mediaPlayer.isPlaying()) mediaPlayer.stop();
                         mediaPlayer.release();
                         mediaPlayer = null;
+                        Toast.makeText(getApplicationContext(),"Audio focus lost", Toast.LENGTH_SHORT).show();
                         break;
 
                     case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
@@ -212,6 +215,10 @@ public class MusicService extends Service implements
         songPosition = songIndex;
     }
 
+    public void removeSongFromQueue(int adapterPosition) {
+        queue.remove(adapterPosition);
+    }
+
     public class MusicBinder extends Binder {
         public MusicService getService() {
             return MusicService.this;
@@ -279,18 +286,23 @@ public class MusicService extends Service implements
                             @Override
                             public void onReceive(Context context, Intent intent) {
                                 pauseResumeSong();
+                                Log.d("TAG ", "Pause Broadcast");
                             }
                         };
                         BroadcastReceiver previousBroadcastReceiver = new BroadcastReceiver() {
                             @Override
                             public void onReceive(Context context, Intent intent) {
                                 playPrevious();
+                                Log.d("TAG ", "Previous Broadcast");
+
                             }
                         };
                         BroadcastReceiver nextBroadcastReceiver = new BroadcastReceiver() {
                             @Override
                             public void onReceive(Context context, Intent intent) {
                                 playNext();
+                                Log.d("TAG ", "Next Broadcast");
+
                             }
                         };
                         registerReceiver(pauseResumeBroadcastReceiver, new IntentFilter("PauseResume"));
