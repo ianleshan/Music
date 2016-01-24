@@ -1,5 +1,6 @@
 package verendus.leshan.music;
 
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -174,10 +175,12 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             @Override
             public void onPanelCollapsed(View panel) {
                 nowPlayingPanel.setSlidingEnabled(true);
-                if(musicService.getPosition() >= musicService.getQueue().size()){
-                    queueList.scrollToPosition(musicService.getPosition() + 1);
-                }else {
-                    queueList.scrollToPosition(musicService.getPosition() + 1);
+                if(musicService != null) {
+                    if (musicService.getPosition() >= musicService.getQueue().size()) {
+                        queueList.scrollToPosition(musicService.getPosition() + 1);
+                    } else {
+                        queueList.scrollToPosition(musicService.getPosition() + 1);
+                    }
                 }
             }
 
@@ -231,9 +234,16 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             }
         };
 
-        god = new God(this);
 
-        if(!god.isDataLoaded())loadData();
+        if(god == null){
+            god = new God(this);
+            loadData();
+        }else {
+            if (!god.isDataLoaded()) {
+                god = new God(this);
+                loadData();
+            }
+        }
     }
 
     private void createImageLoader() {
@@ -304,22 +314,27 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             @Override
             protected void onPostExecute(String result) {
 
-                if (playIntent == null) {
-                    playIntent = new Intent(MainActivity.this, MusicService.class);
-                    startService(playIntent);
-                    bindService(playIntent, musicConnection, Context.BIND_IMPORTANT);
-                }
+                //if(isMyServiceRunning(MusicService.class)) {
+                    if (playIntent == null) {
+                        playIntent = new Intent(MainActivity.this, MusicService.class);
+                        startService(playIntent);
+                        bindService(playIntent, musicConnection, Context.BIND_IMPORTANT);
+                    }
+                //}
 
 
 
                 god.setDrawerLayout(drawerLayout);
 
                 android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
-                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-                LibraryFragment fragment = LibraryFragment.newInstance();
-                fragmentTransaction.add(R.id.library_fragment_container, fragment);
-                fragmentTransaction.commit();
+                if(fragmentManager.findFragmentByTag("LIBRARY") == null) {
+                    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+                    LibraryFragment fragment = LibraryFragment.newInstance();
+                    fragmentTransaction.add(R.id.library_fragment_container, fragment, "LIBRARY");
+                    fragmentTransaction.commit();
+                }
 
                 int height = previewTemplate.getMeasuredHeight();
                 nowPlayingPanel.setPanelHeight(height);
@@ -898,14 +913,17 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
     }
 
     public void setQueueAndPlaySong(ArrayList<Song> newQueue, int position) {
-        Log.d("LOCATING BUG :", "Setting queue");
-        musicService.setQueue(newQueue);
 
-        Log.d("LOCATING BUG :", "Setting position");
-        musicService.setSong(position);
+        if(musicService != null) {
+            Log.d("LOCATING BUG :", "Setting queue");
+            musicService.setQueue(newQueue);
 
-        Log.d("LOCATING BUG :", "Playing song");
-        musicService.playSong();
+            Log.d("LOCATING BUG :", "Setting position");
+            musicService.setSong(position);
+
+            Log.d("LOCATING BUG :", "Playing song");
+            musicService.playSong();
+        }
 
 
     }
@@ -1175,10 +1193,28 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        unbindService(musicConnection);
+    }
+
+
+
+    @Override
     protected void onDestroy() {
         //stopService(playIntent);
         musicService = null;
         super.onDestroy();
+    }
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static MusicService getMusicService() {

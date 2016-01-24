@@ -14,7 +14,7 @@
         android:id="@+id/queue_layout_header_icon"
         android:src="@mipmap/ic_queue_music"
         android:layout_width="50dp"
-        android:layout_height="84dp"
+        android:layout_height="64dp"
         android:layout_weight="0"
         android:padding="12dp"
         android:text="1"
@@ -57,7 +57,7 @@
 
     <ImageView
         android:layout_width="64dp"
-        android:layout_height="84dp"
+        android:layout_height="64dp"
         android:layout_weight="0"
         android:padding="18dp"
         android:src="@mipmap/ic_more" />

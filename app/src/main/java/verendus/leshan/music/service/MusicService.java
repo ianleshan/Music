@@ -59,6 +59,7 @@ public class MusicService extends Service implements
     Notification notification;
     NotificationManager notificationManager;
     private static final int ID = 6900619;
+    boolean isInitialized = false;
 
     private final IBinder musicBind = new MusicBinder();
 
@@ -82,6 +83,7 @@ public class MusicService extends Service implements
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
+        Log.d("ERROR :", "MediaPlayer");
         return false;
     }
 
@@ -200,6 +202,8 @@ public class MusicService extends Service implements
         mediaPlayer.setOnPreparedListener(this);
         mediaPlayer.setOnCompletionListener(this);
         mediaPlayer.setOnErrorListener(this);
+
+        isInitialized = true;
     }
 
     public void setQueue(ArrayList<Song> newQueue) {
@@ -226,6 +230,7 @@ public class MusicService extends Service implements
     }
 
     public void playSong() {
+        if(!isInitialized)initMediaPlayer();
         if (mediaPlayer != null) mediaPlayer.reset();
         //get song
         final Song playSong = queue.get(songPosition);
@@ -383,6 +388,7 @@ public class MusicService extends Service implements
     }
 
     public boolean isPlaying() {
+        if(!isInitialized)initMediaPlayer();
         return mediaPlayer.isPlaying();
     }
 
