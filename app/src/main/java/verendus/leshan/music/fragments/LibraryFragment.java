@@ -87,7 +87,6 @@ public class LibraryFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRetainInstance(true);
         mainActivity = ((MainActivity)getActivity());
         god = mainActivity.getGod();
         mainActivity.setVolumeControlStream(AudioManager.STREAM_MUSIC);

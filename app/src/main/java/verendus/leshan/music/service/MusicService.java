@@ -60,6 +60,8 @@ public class MusicService extends Service implements
     NotificationManager notificationManager;
     private static final int ID = 6900619;
     boolean isInitialized = false;
+    private God god;
+
 
     private final IBinder musicBind = new MusicBinder();
 
@@ -165,6 +167,7 @@ public class MusicService extends Service implements
     public void onDestroy() {
         super.onDestroy();
         mediaSession.release();
+        mediaPlayer.release();
         audioManager.abandonAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
             @Override
             public void onAudioFocusChange(int focusChange) {
@@ -348,7 +351,7 @@ public class MusicService extends Service implements
                         startForeground(ID, notification);
                     }
                 });
-                thread.start();
+                //thread.start();
 
 
             }
@@ -374,7 +377,7 @@ public class MusicService extends Service implements
     public void resumeSong() {
         mediaPlayer.start();
         //mediaPlayer.seekTo(pausePosition);
-        startForeground(ID, notification);
+        //startForeground(ID, notification);
     }
 
     public void pauseResumeSong(){
@@ -417,5 +420,13 @@ public class MusicService extends Service implements
 
     public MediaPlayer getMediaPlayer() {
         return mediaPlayer;
+    }
+
+    public God getGod() {
+        return god;
+    }
+
+    public void setGod(God god) {
+        this.god = god;
     }
 }

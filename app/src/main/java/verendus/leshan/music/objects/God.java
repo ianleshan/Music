@@ -37,6 +37,7 @@ public class God implements Serializable{
     static ArrayList<Genre> genres = new ArrayList<>();
     static ArrayList<Playlist> playlists = new ArrayList<>();
     boolean isDataLoaded = false;
+    boolean alreadyPlaying = false;
 
     final static int DEFAULT = 0xFF424242;
 
@@ -52,6 +53,8 @@ public class God implements Serializable{
     View timeControl;
 
     ObjectAnimator nowPlayingAnimation;
+
+    int height;
 
     //ProgressBarDeterminate progressBarDeterminate;
 
@@ -492,5 +495,21 @@ public class God implements Serializable{
         }
 
         return genres.get(0);
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    public boolean isAlreadyPlaying() {
+        return alreadyPlaying;
+    }
+
+    public void setAlreadyPlaying(boolean alreadyPlaying) {
+        this.alreadyPlaying = alreadyPlaying;
     }
 }
