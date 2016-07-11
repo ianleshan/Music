@@ -56,7 +56,7 @@ public class SongListAdapter extends RecyclerView.Adapter<SongListAdapter.Recycl
         this.imageLoader = imageLoader;
         this.songs = songs;
         inflater = LayoutInflater.from(c);
-        font = Typeface.createFromAsset(c.getAssets(), "font.ttf");
+        font = Typeface.createFromAsset(c.getAssets(), "Roboto-Regular.ttf");
     }
 
     @Override
@@ -66,10 +66,10 @@ public class SongListAdapter extends RecyclerView.Adapter<SongListAdapter.Recycl
                 (R.layout.song_temp, parent, false);
 
         MaterialRippleLayout layout = MaterialRippleLayout.on(linearLayout)
-                .rippleAlpha(0.2f)
+                .rippleAlpha(0.4f)
                 .rippleColor(0xFF585858)
                 .rippleOverlay(true)
-                .rippleDuration(200)
+                .rippleDuration(500)
                 .rippleDelayClick(false)
                 .create();
 
@@ -90,6 +90,7 @@ public class SongListAdapter extends RecyclerView.Adapter<SongListAdapter.Recycl
         holder.artistView.setText(currSong.getArtist());
         holder.albumArt.setImageBitmap(null);
         imageLoader.displayImage(God.getAlbumFromName(currSong.getAlbum()).getCoverArt(), holder.albumArt);
+        //imageLoader.displayImage(currSong.getCoverArt(), holder.albumArt);
         //set position as tag
         holder.itemView.setTag(position);
         //return songLay;
@@ -103,7 +104,7 @@ public class SongListAdapter extends RecyclerView.Adapter<SongListAdapter.Recycl
     }
 
     public interface OnItemClickListener {
-        public void onItemClick(View view, int position);
+        void onItemClick(View view, int position);
     }
 
     public void setOnItemClickListener(final OnItemClickListener mItemClickListener) {

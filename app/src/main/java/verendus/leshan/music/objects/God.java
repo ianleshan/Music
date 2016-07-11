@@ -38,6 +38,7 @@ public class God implements Serializable{
     static ArrayList<Playlist> playlists = new ArrayList<>();
     boolean isDataLoaded = false;
     boolean alreadyPlaying = false;
+    boolean isNowPlayingPanelOpen = false;
 
     final static int DEFAULT = 0xFF424242;
 
@@ -111,6 +112,12 @@ public class God implements Serializable{
                     preview.setAlpha(1 - (slideOffset*5));
                 }
 
+                for(int i = 0; i < mainActivity.getPreviews().size(); i ++){
+                    mainActivity.getPreviews().get(i).setVisibility(View.VISIBLE);
+                }
+
+                isNowPlayingPanelOpen = false;
+
                 if(nowPlayingStatusBar != null) {
                     float limit = .9f;
                     if (slideOffset < limit) {
@@ -173,6 +180,12 @@ public class God implements Serializable{
                     preview.setVisibility(View.INVISIBLE);
                 }
 
+                for(int i = 0; i < mainActivity.getPreviews().size(); i ++){
+                    mainActivity.getPreviews().get(i).setVisibility(View.INVISIBLE);
+                }
+
+                isNowPlayingPanelOpen = true;
+
             }
 
             @Override
@@ -197,6 +210,10 @@ public class God implements Serializable{
             x = y/(1-v);
         }
         return x;
+    }
+
+    public boolean isNowPlayingPanelOpen() {
+        return isNowPlayingPanelOpen;
     }
 
     public ViewPager getNowPlayingViewPager() {
@@ -495,6 +512,10 @@ public class God implements Serializable{
         }
 
         return genres.get(0);
+    }
+
+    public void stopThreads(){
+        if(thread!=null)thread.interrupt();
     }
 
     public int getHeight() {

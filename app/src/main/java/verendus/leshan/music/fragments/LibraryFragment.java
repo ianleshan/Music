@@ -2,6 +2,7 @@ package verendus.leshan.music.fragments;
 
 import android.content.Context;
 import android.database.DataSetObserver;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
@@ -15,6 +16,7 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.view.GravityCompat;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
@@ -24,6 +26,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -64,14 +67,14 @@ public class LibraryFragment extends Fragment {
     static AlbumListAdapter.OnItemClickListener albumItemClickListener;
     static GenreListAdapter.OnItemClickListener genreItemClickListener;
 
-    private static final int NUM_OF_TABS = 6;
+    private static final int NUM_OF_TABS = 5;
     private static final int SONGS = 0;
     private static final int ALBUMS = 1;
     private static final int ARTISTS = 2;
-    private static final int GENRES = 3;
-    private static final int PLAYLISTS = 4;
+    private static final int PLAYLISTS = 3;
+    private static final int GENRES = 4;
     private static final int FOLDERS = 5;
-    private static final CharSequence[] TITLES = new CharSequence[]{"Songs", "Albums", "Artists", "Genres", "Playlists", "Folders"};
+    private static final CharSequence[] TITLES = new CharSequence[]{"Songs", "Albums", "Artists", "Playlists", "Genres",  "Folders"};
 
 
     public LibraryFragment() {
@@ -95,6 +98,10 @@ public class LibraryFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_main, menu);
+        MenuItem menuItem = menu.getItem(0);
+        Drawable drawable = menuItem.getIcon();
+        drawable.setTint(Color.BLACK);
+        menuItem.setIcon(drawable);
     }
 
     @Override
@@ -145,19 +152,10 @@ public class LibraryFragment extends Fragment {
             @Override
             public void onItemClick(final View view, int position) {
 
-                ImageView imageView = (ImageView) view.findViewById(R.id.album_temp_art);
-
-                int[] location = new int[2];
-                imageView.getLocationOnScreen(location);
-                int width = imageView.getMeasuredWidth();
-
                 android.support.v4.app.FragmentManager fragmentManager = appCompatActivity.getSupportFragmentManager();
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-                AlbumViewFragment fragment = AlbumViewFragment.newInstance(position,
-                        location[0],
-                        location[1],
-                        width);
+                AlbumViewFragment fragment = AlbumViewFragment.newInstance(position);
                 fragmentTransaction.add(R.id.level1_fragment_container, fragment);
                 fragmentTransaction.addToBackStack(null);
                 fragmentTransaction.commit();
@@ -180,8 +178,8 @@ public class LibraryFragment extends Fragment {
             }
         };
 
-        font = Typeface.createFromAsset(getActivity().getAssets(), "font.ttf");
-        titleFont = Typeface.createFromAsset(getActivity().getAssets(), "titleFont.ttf");
+        font = Typeface.createFromAsset(getActivity().getAssets(), "Roboto-Regular.ttf");
+        titleFont = Typeface.createFromAsset(getActivity().getAssets(), "boldFont.ttf");
 
         appBar = (AppBarLayout) rootView.findViewById(R.id.appbar);
         toolbar = (Toolbar) rootView.findViewById(R.id.toolbar);
@@ -190,7 +188,7 @@ public class LibraryFragment extends Fragment {
         if(toolbar != null){
             appCompatActivity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             Drawable drawable = getResources().getDrawable(R.mipmap.ic_drawer);
-            DrawableCompat.setTint(drawable, R.color.main_text_color);
+            DrawableCompat.setTint(drawable, getResources().getColor(R.color.main_text_color));
             toolbar.setNavigationIcon(drawable);
             toolbar.setNavigationOnClickListener(new View.OnClickListener() {
                 @Override
@@ -205,7 +203,9 @@ public class LibraryFragment extends Fragment {
         ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter(getActivity().getSupportFragmentManager());
         if(viewPager != null){viewPager.setAdapter(viewPagerAdapter);
         tabLayout.setupWithViewPager(viewPager);}
-        God.overrideFonts(appBar, titleFont);
+        //God.overrideFonts(appBar, titleFont);
+        God.overrideFonts(tabLayout, titleFont);
+        God.overrideFonts(toolbar, font);
         return rootView;
     }
 

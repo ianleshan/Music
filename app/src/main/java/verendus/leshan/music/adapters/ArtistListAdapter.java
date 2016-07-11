@@ -70,7 +70,7 @@ public class ArtistListAdapter extends RecyclerView.Adapter<ArtistListAdapter.Al
         this.imageLoader = imageLoader;
         this.artists = artists;
         inflater = LayoutInflater.from(c);
-        font = Typeface.createFromAsset(c.getAssets(), "font.ttf");
+        font = Typeface.createFromAsset(c.getAssets(), "boldFont.ttf");
     }
 
     @Override

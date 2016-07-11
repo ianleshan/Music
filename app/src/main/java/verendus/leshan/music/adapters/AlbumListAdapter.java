@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.CardView;
@@ -72,7 +73,7 @@ public class AlbumListAdapter extends RecyclerView.Adapter<AlbumListAdapter.Albu
         this.albums = albums;
         this.appCompatActivity = (AppCompatActivity) c;
         inflater = LayoutInflater.from(c);
-        font = Typeface.createFromAsset(c.getAssets(), "font.ttf");
+        font = Typeface.createFromAsset(c.getAssets(), "Roboto-Regular.ttf");
     }
 
     @Override
@@ -92,10 +93,10 @@ public class AlbumListAdapter extends RecyclerView.Adapter<AlbumListAdapter.Albu
         this.position = position;
 
         holder.itemView.setTag(position);
-        holder.cardView.setCardBackgroundColor(Color.BLACK);
-        holder.albumName.setTextColor(Color.LTGRAY);
-        holder.artistName.setTextColor(Color.LTGRAY);
-        holder.moreIcon.setColorFilter(Color.LTGRAY);
+        holder.cardView.setCardBackgroundColor(appCompatActivity.getResources().getColor(R.color.card_background));
+        holder.albumName.setTextColor(appCompatActivity.getResources().getColor(R.color.text_color));
+        holder.artistName.setTextColor(appCompatActivity.getResources().getColor(R.color.detail_color));
+        holder.moreIcon.setColorFilter(R.color.text_color);
         holder.albumName.setTypeface(font);
         holder.artistName.setTypeface(font);
         holder.albumName.setText(album.getName());
@@ -180,7 +181,7 @@ public class AlbumListAdapter extends RecyclerView.Adapter<AlbumListAdapter.Albu
     }
 
     public interface OnItemClickListener {
-        public void onItemClick(View view, int position);
+        void onItemClick(View view, int position);
     }
 
     public void setOnItemClickListener(AlbumListAdapter.OnItemClickListener mItemClickListener) {

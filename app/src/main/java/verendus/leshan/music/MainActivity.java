@@ -1,7 +1,5 @@
 package verendus.leshan.music;
 
-import android.app.ActivityManager;
-import android.app.FragmentManager;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -22,7 +20,6 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.design.widget.NavigationView;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
@@ -90,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
     private static final String TAG = "MAIN_ACTIVITY";
     private static final String WORKER_FRAGMENT_TAG = "WorkerFragmentTag";
 
-    private God god;
+    private static God god;
     private static MusicService musicService;
     private boolean musicBound = false;
 
@@ -105,7 +102,16 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
     TextView songTitle, songArtist, drawerHeaderTitle;
     SquaredImageView drawerHeaderImage;
 
-    public static final String[] imageQualities = new String[]{ "small", "medium", "large", "extralarge", "mega"};
+    static ImageView playPause;
+    ImageView next;
+    ImageView previous;
+    ImageView shuffleTogle;
+    ImageView repeatToggle;
+    TextView totalTime, currentTime;
+    SeekBarCompat slider;
+    LinearLayout nowPlayingLayout;
+
+    public static final String[] imageQualities = new String[]{"small", "medium", "large", "extralarge", "mega"};
     public static int SMALL = 0;
     public static int MEDIUM = 1;
     public static int LARGE = 2;
@@ -114,10 +120,11 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
     public static final String IMAGE_QUALITY = imageQualities[EXTRA_LARGE];
 
     static Typeface font;
-    Typeface titleFont;
+    Typeface titleFont, boldFont;
 
     static ImageLoader imageLoader;
 
+    static ArrayList<View> previews = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -133,12 +140,13 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
         createImageLoader();
 
-        font = Typeface.createFromAsset(getAssets(), "font.ttf");
+        font = Typeface.createFromAsset(getAssets(), "Roboto-Regular.ttf");
         titleFont = Typeface.createFromAsset(getAssets(), "titleFont.ttf");
+        boldFont = Typeface.createFromAsset(getAssets(), "boldFont.ttf");
 
         songTitle = (TextView) findViewById(R.id.now_playing_title);
         songArtist = (TextView) findViewById(R.id.now_playing_artist);
-        queueLayoutHeader = (LinearLayout) findViewById(R.id.queue_layout_header);
+        queueLayoutHeader = (LinearLayout) findViewById(R.id.queue_layout);
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer);
         navigationView = (NavigationView) findViewById(R.id.nav_view);
         drawerHeaderImage = (SquaredImageView) navigationView.getHeaderView(0).findViewById(R.id.drawer_header_image);
@@ -150,9 +158,25 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
         nowPlayingPanel = (MySlidingUpLayout) findViewById(R.id.sliding_layout);
         queueSlidingPanel = (MySlidingUpLayout) findViewById(R.id.queue_sliding_panel);
 
+
+        playPause = (ImageView) findViewById(R.id.play_pause);
+        next = (ImageView) findViewById(R.id.next);
+        previous = (ImageView) findViewById(R.id.previous);
+        repeatToggle = (ImageView) findViewById(R.id.repeat_toggle);
+        shuffleTogle = (ImageView) findViewById(R.id.shuffle_toggle);
+
+        nowPlayingLayout = (LinearLayout) findViewById(R.id.now_playing_layout);
+        totalTime = (TextView) findViewById(R.id.now_playing_total_time);
+        currentTime = (TextView) findViewById(R.id.now_playing_curr_time);
+        slider = (SeekBarCompat) findViewById(R.id.now_playing_slider);
+
         God.overrideFonts(previewTemplate, font);
         God.overrideFonts(loadingScreen, font);
         God.overrideFonts(nowPlayingPanel, font);
+        God.overrideFonts(queueLayoutHeader, boldFont);
+
+
+
         drawerHeaderTitle.setTypeface(titleFont);
 
         drawerHeaderImage.setOnClickListener(new View.OnClickListener() {
@@ -162,6 +186,38 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                 nowPlayingPanel.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
             }
         });
+
+        next.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                musicService.playNext();
+            }
+        });
+
+        previous.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                musicService.playPrevious();
+            }
+        });
+
+        View.OnClickListener onClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                if (musicService.isPlaying()) {
+                    musicService.pauseSong();
+                    playPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_now_playing));
+                    //previewPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_now_playing));
+                } else {
+                    musicService.resumeSong();
+                    playPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause));
+                    //previewPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause));
+                }
+
+            }
+        };
+        playPause.setOnClickListener(onClickListener);
 
         int previewTemplateMeasuredHeight = previewTemplate.getMeasuredHeight();
         int queueLayoutHeaderMeasuredHeight = queueLayoutHeader.getMeasuredHeight();
@@ -185,7 +241,8 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             @Override
             public void onPanelCollapsed(View panel) {
                 nowPlayingPanel.setSlidingEnabled(true);
-                if(musicService != null) {
+                if (musicService != null) {
+                    queueList.scrollToPosition(0);
                     if (musicService.getPosition() >= musicService.getQueue().size()) {
                         queueList.scrollToPosition(musicService.getPosition() + 1);
                     } else {
@@ -215,7 +272,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
-                switch (event.getAction()){
+                switch (event.getAction()) {
 
                     case MotionEvent.ACTION_DOWN:
 
@@ -225,7 +282,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
                     case MotionEvent.ACTION_UP:
 
-                        if(queueSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED){
+                        if (queueSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED) {
                             nowPlayingPanel.setSlidingEnabled(true);
                         }
 
@@ -251,7 +308,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
         if (workerFragment == null) {
             workerFragment = new WorkerFragment();
             fm.beginTransaction().add(workerFragment, WORKER_FRAGMENT_TAG).commit();
-        }else {
+        } else {
             god = workerFragment.getGod();
 
             int height = god.getHeight();
@@ -262,9 +319,20 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             god.setPreview(previewTemplate);
             god.setNowPlayingStatusBar((RelativeLayout) findViewById(R.id.status_bar_color_2));
             god.setLibraryStatusBar((RelativeLayout) findViewById(R.id.status_bar_color_1));
+
+            god.setCurrentTime(currentTime);
+            god.setTotalTime(totalTime);
+            god.setSlider(slider);
+            god.setRepeatButton(repeatToggle);
+            god.setPreviousButton(previous);
+            god.setPauseButton(playPause);
+            god.setNextButton(next);
+            god.setTimeControl(findViewById(R.id.timeControl));
+            god.setShuffleButton(shuffleTogle);
+
             loadingScreen.setVisibility(View.GONE);
 
-            if(god.isAlreadyPlaying())refreshUI(musicService.getPosition(), true);
+            if (god.isAlreadyPlaying()) refreshUI(musicService.getPosition(), true);
         }
 
 
@@ -335,25 +403,23 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             }
 
 
-
             @Override
             protected void onPostExecute(String result) {
 
-                /**if(isMyServiceRunning(MusicService.class)) {
+                /*if(isMyServiceRunning(MusicService.class)) {
                     if (playIntent == null) {
                         playIntent = new Intent(MainActivity.this, MusicService.class);
                         startService(playIntent);
                         bindService(playIntent, musicConnection, Context.BIND_IMPORTANT);
                     }
-                //}**/
-
+                }**/
 
 
                 god.setDrawerLayout(drawerLayout);
 
                 android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
 
-                if(fragmentManager.findFragmentByTag("LIBRARY") == null) {
+                if (fragmentManager.findFragmentByTag("LIBRARY") == null) {
                     FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
                     LibraryFragment fragment = LibraryFragment.newInstance();
@@ -433,7 +499,8 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                 String thisTitle = musicCursor.getString(titleColumn);
                 String thisArtist = musicCursor.getString(artistColumn);
                 String thisAlbum = musicCursor.getString(albumColumn);
-                int thisTrack = musicCursor.getInt(trackColumn);Log.d("TAG", thisTrack+"  ----  " + thisAlbum);
+                int thisTrack = musicCursor.getInt(trackColumn);
+                Log.d("TAG", thisTrack + "  ----  " + thisAlbum);
                 int thisDuration = musicCursor.getInt(durationColumn);
                 int thisDateAdded = musicCursor.getInt(dateAddedID);
                 boolean isAlarm = (musicCursor.getShort(isAlarmID) != 0);
@@ -450,7 +517,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
 
                 //Log.d("ALBUM ART" ,albumArtUri.toString());
-                /**
+                /*
                  Bitmap bitmap = null;
                  int width = getWindowManager().getDefaultDisplay().getWidth();
                  try {
@@ -470,7 +537,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                  s.printStackTrace();
                  bitmap = defaultBitmap;
                  }
-                 **/
+                 */
 
                 if (!isAlarm && !isNotification && !isRingtone) {
                     Song song = new Song(thisTitle,
@@ -520,6 +587,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
         }
 
     }
+
     public void loadGenres() {
 
         ContentResolver musicResolver = getContentResolver();
@@ -542,7 +610,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                 Genre genre = new Genre(thisTitle);
 
                 Uri genreListUri = MediaStore.Audio.Genres.Members.getContentUri("external", genreID);
-                Cursor genreMembersCursor = musicResolver.query(genreListUri, null,null, null, null);
+                Cursor genreMembersCursor = musicResolver.query(genreListUri, null, null, null, null);
 
                 if (genreMembersCursor != null && genreMembersCursor.moveToFirst()) {
                     //get columns
@@ -571,6 +639,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
         }
 
     }
+
     public void loadPlaylists() {
 
         ContentResolver musicResolver = getContentResolver();
@@ -593,7 +662,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                 Playlist playlist = new Playlist(thisTitle);
 
                 Uri playlistUri = MediaStore.Audio.Playlists.Members.getContentUri("external", playlistID);
-                Cursor playlistMembersCursor = musicResolver.query(playlistUri, null,null, null, null);
+                Cursor playlistMembersCursor = musicResolver.query(playlistUri, null, null, null, null);
 
                 if (playlistMembersCursor != null && playlistMembersCursor.moveToFirst()) {
                     //get columns
@@ -666,7 +735,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
     private String getAlbumArt(String album, String artist, String loacalArt) {
 
-        if(loacalArt != null)return loacalArt;
+        if (loacalArt != null) return loacalArt;
 
         String albumArtUrl = null;
         String x = null;
@@ -674,9 +743,9 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
         SharedPreferences prefs = getSharedPreferences("albumArt", MODE_PRIVATE);
         albumArtUrl = prefs.getString(album, null);
 
-        if(albumArtUrl != null){
+        if (albumArtUrl != null) {
             return albumArtUrl;
-        }else {
+        } else {
 
 
             try {
@@ -726,8 +795,9 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
             musicService = binder.getService();
             musicService.setMusicChanger(MainActivity.this);
-            if(musicService.getGod() != null)god = musicService.getGod();
+            if (musicService.getGod() != null) god = musicService.getGod();
             musicBound = true;
+            musicService.setGod(god);
         }
 
         @Override
@@ -788,160 +858,174 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
     public void onPlay(final int position, boolean isNewQueue) {
 
         god.setAlreadyPlaying(true);
+
+        god.setCurrentTime(currentTime);
+        god.setTotalTime(totalTime);
+        god.setSlider(slider);
+        god.setRepeatButton(repeatToggle);
+        god.setPreviousButton(previous);
+        god.setPauseButton(playPause);
+        god.setNextButton(next);
+        god.setTimeControl(findViewById(R.id.timeControl));
+        god.setShuffleButton(shuffleTogle);
+
         refreshUI(position, isNewQueue);
+
+        managePreviews();
     }
 
 
-    public void refreshUI(final int position, boolean isNewQueue){
-            Song song = musicService.getQueue().get(position);
-            songTitle.setText(song.getTitle());
-            songArtist.setText(song.getArtist());
-            drawerHeaderTitle.setText(song.getTitle());
-            imageLoader.displayImage(song.getCoverArt(), drawerHeaderImage);
+    public void refreshUI(final int position, boolean isNewQueue) {
+        final Song song = musicService.getQueue().get(position);
+        songTitle.setText(song.getTitle());
+        songArtist.setText(song.getArtist());
+        drawerHeaderTitle.setText(song.getTitle());
 
-            if (isNewQueue) {
-                final NowPlayingViewPagerAdapter viewPagerAdapter = new NowPlayingViewPagerAdapter(getSupportFragmentManager());
-                viewPager = (MyViewPager) findViewById(R.id.now_playing_view_pager);
-                viewPager.removeOnPageChangeListener(onPageChangeListener);
-                if (viewPager != null) {
-                    viewPager.setAdapter(viewPagerAdapter);
-                    viewPager.setCurrentItem(position);
-                }
-                viewPager.addOnPageChangeListener(onPageChangeListener);
-                god.setNowPlayingViewPager(viewPager);
+        ImageLoadingListener imageLoadingListener = new ImageLoadingListener() {
+            @Override
+            public void onLoadingStarted(String imageUri, View view) {
 
-                GridLayoutManager llm = new GridLayoutManager(getApplicationContext(), 1);
-                queueList.setLayoutManager(llm);
-                queueList.setHasFixedSize(true);
-                QueueListAdapter recyclerViewAdapter = new QueueListAdapter(getApplicationContext(), musicService.getQueue(), imageLoader);
-                recyclerViewAdapter.setOnItemClickListener(queueOnItemClickListener);
-                queueList.setAdapter(recyclerViewAdapter);
+            }
 
-                ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
-                    @Override
-                    public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
-                        return false;
-                    }
+            @Override
+            public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
 
-                    @Override
-                    public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
-                        //Remove swiped item from list and notify the RecyclerView
-                        musicService.removeSongFromQueue(viewHolder.getAdapterPosition());
-                        queueList.getAdapter().notifyItemRemoved(viewHolder.getAdapterPosition());
-                        viewPager.getAdapter().notifyDataSetChanged();
+            }
+
+            @Override
+            public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+
+                Palette.PaletteAsyncListener paletteListener = new Palette.PaletteAsyncListener() {
+                    public void onGenerated(Palette palette) {
+
+                        if (palette.getVibrantSwatch() != null) {
+                            setColorsAccordingToSwatch(palette.getVibrantSwatch());
+                        } else if (palette.getMutedSwatch() != null) {
+                            setColorsAccordingToSwatch(palette.getMutedSwatch());
+                        } else if (palette.getLightVibrantSwatch() != null) {
+                            setColorsAccordingToSwatch(palette.getLightVibrantSwatch());
+                        } else if (palette.getDarkVibrantSwatch() != null) {
+                            setColorsAccordingToSwatch(palette.getDarkVibrantSwatch());
+                        } else if (palette.getLightMutedSwatch() != null) {
+                            setColorsAccordingToSwatch(palette.getLightMutedSwatch());
+                        } else if (palette.getDarkMutedSwatch() != null) {
+                            setColorsAccordingToSwatch(palette.getDarkMutedSwatch());
+                        }
+
+                        if (palette.getDarkMutedSwatch() != null) {
+                            setQueueColorsAccordingToSwatch(palette.getDarkMutedSwatch());
+                        } else if (palette.getLightMutedSwatch() != null) {
+                            setQueueColorsAccordingToSwatch(palette.getLightMutedSwatch());
+                        } else if (palette.getDarkVibrantSwatch() != null) {
+                            setQueueColorsAccordingToSwatch(palette.getDarkVibrantSwatch());
+                        } else if (palette.getLightVibrantSwatch() != null) {
+                            setQueueColorsAccordingToSwatch(palette.getLightVibrantSwatch());
+                        } else if (palette.getMutedSwatch() != null) {
+                            setQueueColorsAccordingToSwatch(palette.getMutedSwatch());
+                        } else if (palette.getVibrantSwatch() != null) {
+                            setQueueColorsAccordingToSwatch(palette.getVibrantSwatch());
+                        }
                     }
                 };
 
-                ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
-                itemTouchHelper.attachToRecyclerView(queueList);
+                if (loadedImage != null && !loadedImage.isRecycled()) {
+                    Palette.from(loadedImage).generate(paletteListener);
+                }
+            }
+
+            @Override
+            public void onLoadingCancelled(String imageUri, View view) {
+
+            }
+        };
+
+        //imageLoader.loadImage(song.getCoverArt(), );
+        imageLoader.displayImage(song.getCoverArt(), drawerHeaderImage, imageLoadingListener);
+
+        if (isNewQueue) {
+            final NowPlayingViewPagerAdapter viewPagerAdapter = new NowPlayingViewPagerAdapter(getSupportFragmentManager());
+            viewPager = (MyViewPager) findViewById(R.id.now_playing_view_pager);
+            viewPager.removeOnPageChangeListener(onPageChangeListener);
+            if (viewPager != null) {
+                viewPager.setAdapter(viewPagerAdapter);
+                viewPager.setCurrentItem(position);
+            }
+            viewPager.addOnPageChangeListener(onPageChangeListener);
+            god.setNowPlayingViewPager(viewPager);
+
+            GridLayoutManager llm = new GridLayoutManager(getApplicationContext(), 1);
+            queueList.setLayoutManager(llm);
+            queueList.setHasFixedSize(true);
+            QueueListAdapter recyclerViewAdapter = new QueueListAdapter(getApplicationContext(), musicService.getQueue(), imageLoader);
+            recyclerViewAdapter.setOnItemClickListener(queueOnItemClickListener);
+            queueList.setAdapter(recyclerViewAdapter);
+
+            ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+                @Override
+                public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+                    return false;
+                }
+
+                @Override
+                public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
+                    //Remove swiped item from list and notify the RecyclerView
+                    musicService.removeSongFromQueue(viewHolder.getAdapterPosition());
+                    queueList.getAdapter().notifyItemRemoved(viewHolder.getAdapterPosition());
+                    viewPager.getAdapter().notifyDataSetChanged();
+                }
+            };
+
+            ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
+            itemTouchHelper.attachToRecyclerView(queueList);
+        } else {
+
+            //Log.d("HERE  :::", "HERE");
+            if (viewPager != null) {
+                viewPager.removeOnPageChangeListener(onPageChangeListener);
+                viewPager.setCurrentItem(position, true);
+                viewPager.addOnPageChangeListener(onPageChangeListener);
+            }
+
+        }
+        if (queueSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED) {
+            queueList.scrollToPosition(musicService.getQueue().size() - 1);
+            if (position >= musicService.getQueue().size()) {
+                queueList.scrollToPosition(position);
             } else {
+                queueList.scrollToPosition(position + 1);
+            }
+        }
+        /*Thread thread = new Thread(new Runnable() {
+            public void run() {
 
-                //Log.d("HERE  :::", "HERE");
+                while (viewPager == null) {
+
+                }
+
                 if (viewPager != null) {
-                    viewPager.setCurrentItem(position, true);
-                }
-
-            }
-            if(queueSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED){
-                if(position >= musicService.getQueue().size()){
-                    queueList.scrollToPosition(position + 1);
-                }else {
-                    queueList.scrollToPosition(position + 1);
-                }
-            }
-            Thread thread = new Thread(new Runnable() {
-                public void run() {
-
-                    while (viewPager == null) {
-
-                    }
                     while (viewPager.findViewWithTag(position) == null) {
 
                     }
 
                     final View view = viewPager.findViewWithTag(position);
-                    god.setCurrentTime((TextView) view.findViewById(R.id.now_playing_curr_time));
-                    god.setTotalTime((TextView) view.findViewById(R.id.now_playing_total_time));
-                    //god.setProgressBarDeterminate((ProgressBarDeterminate) view.findViewById(R.id.now_playing_preview_progress));
-                    god.setSlider((SeekBarCompat) view.findViewById(R.id.now_playing_slider));
-                    god.setPreview((RelativeLayout) view.findViewById(R.id.now_playing_preview));
 
-                    //god.setNowPlayingTitle(view.findViewById(R.id.now_playing_title));
-                    //god.setNowPlayingArtist(view.findViewById(R.id.now_playing_artist));
-                    god.setRepeatButton(view.findViewById(R.id.repeat_toggle));
-                    god.setPreviousButton(view.findViewById(R.id.previous));
-                    god.setPauseButton(view.findViewById(R.id.play_pause));
-                    god.setNextButton(view.findViewById(R.id.next));
-                    god.setTimeControl(view.findViewById(R.id.timeControl));
-                    god.setShuffleButton(view.findViewById(R.id.shuffle_toggle));
-
-
-                    LinearLayout linearLayout = (LinearLayout) view.findViewById(R.id.now_playing_layout);
-                    while (linearLayout.getTag() == null) {
-
-                        linearLayout = (LinearLayout) view.findViewById(R.id.now_playing_layout);
-
-                    }
-
-
-                    final LinearLayout finalLinearLayout = linearLayout;
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            if(finalLinearLayout.getTag() != null)god.setNowPlayingStatusBarColor( (int) finalLinearLayout.getTag());
+                            //god.setProgressBarDeterminate((ProgressBarDeterminate) view.findViewById(R.id.now_playing_preview_progress));
+                            god.setPreview((RelativeLayout) view.findViewById(R.id.now_playing_preview));
                         }
                     });
-
-
-                /*if (position != 0) {
-                    while (viewPager.findViewWithTag(position - 1) == null) {
-
-                    }
-
-                    view = viewPager.findViewWithTag(position);
-                    final RelativeLayout previewLayout = (RelativeLayout) view.findViewById(R.id.now_playing_preview);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (god.isPanelExpanded()) {
-                                previewLayout.setVisibility(View.INVISIBLE);
-                            } else {
-                                previewLayout.setVisibility(View.VISIBLE);
-                            }
-                        }
-                    });
-
                 }
-
-
-                if (position != musicService.getQueue().size()) {
-                    while (viewPager.findViewWithTag(position + 1) == null) {
-
-                    }
-
-                    view = viewPager.findViewWithTag(position);
-                    final RelativeLayout previewLayout = (RelativeLayout) view.findViewById(R.id.now_playing_preview);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (god.isPanelExpanded()) {
-                                previewLayout.setVisibility(View.INVISIBLE);
-                            } else {
-                                previewLayout.setVisibility(View.VISIBLE);
-                            }
-                        }
-                    });
-
-                }*/
-                }
-            });
-            //thread.start();
+            }
+        });
+        thread.start();*/
     }
 
 
     public void setQueueAndPlaySong(ArrayList<Song> newQueue, int position) {
 
-        if(musicService != null) {
+        if (musicService != null) {
             musicService.setQueue(newQueue);
             musicService.setSong(position);
             musicService.playSong();
@@ -963,7 +1047,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
         android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
 
-        if(fragmentManager.findFragmentByTag("LIBRARY") == null) {
+        if (fragmentManager.findFragmentByTag("LIBRARY") == null) {
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
             LibraryFragment fragment = LibraryFragment.newInstance();
@@ -989,7 +1073,14 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
     @Override
     public void preExecute() {
         //Make an animation for this
+        loadingScreen = (RelativeLayout) findViewById(R.id.loading_screen);
         loadingScreen.setVisibility(View.VISIBLE);
+    }
+
+    public void setQueueColorsAccordingToSwatch(Palette.Swatch swatch) {
+        (findViewById(R.id.queue_layout_header)).setBackgroundColor(swatch.getRgb());
+        songTitle.setTextColor(swatch.getTitleTextColor());
+        songArtist.setTextColor(swatch.getBodyTextColor());
     }
 
     class NowPlayingViewPagerAdapter extends FragmentStatePagerAdapter {
@@ -1026,11 +1117,9 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
         int position;
 
-        ImageView playPause, next, previous, albumArt, previewPlayPause, shuffleTogle, repeatToggle;
+        ImageView previewPlayPause, albumArt;
         RelativeLayout preview;
-        LinearLayout nowPlayingLayout;
-        TextView totalTime, currentTime, previewTitle, previewArtist;
-        SeekBarCompat slider;
+        TextView previewTitle, previewArtist;
         //ProgressBarDeterminate previewProgress;
 
 
@@ -1041,21 +1130,10 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             View rootView = inflater.inflate(R.layout.now_playing, container, false);
             rootView.setTag(position);
 
-            if(musicService == null)return rootView;
+            if (musicService == null) return rootView;
             final Song song = musicService.getQueue().get(position);
 
             albumArt = (ImageView) rootView.findViewById(R.id.now_playing_albumart);
-            playPause = (ImageView) rootView.findViewById(R.id.play_pause);
-            next = (ImageView) rootView.findViewById(R.id.next);
-            previous = (ImageView) rootView.findViewById(R.id.previous);
-            repeatToggle = (ImageView) rootView.findViewById(R.id.repeat_toggle);
-            shuffleTogle = (ImageView) rootView.findViewById(R.id.shuffle_toggle);
-            nowPlayingLayout = (LinearLayout) rootView.findViewById(R.id.now_playing_layout);
-            //title = (TextView) rootView.findViewById(R.id.now_playing_title);
-            //artist = (TextView) rootView.findViewById(R.id.now_playing_artist);
-            totalTime = (TextView) rootView.findViewById(R.id.now_playing_total_time);
-            currentTime = (TextView) rootView.findViewById(R.id.now_playing_curr_time);
-            slider = (SeekBarCompat) rootView.findViewById(R.id.now_playing_slider);
 
             preview = (RelativeLayout) rootView.findViewById(R.id.now_playing_preview);
             previewTitle = (TextView) rootView.findViewById(R.id.now_playing_preview_title);
@@ -1085,14 +1163,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
 
                 }
             };
-            playPause.setOnClickListener(onClickListener);
             previewPlayPause.setOnClickListener(onClickListener);
-            next.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    musicService.playNext();
-                }
-            });
             preview.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -1115,85 +1186,18 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
                 }
             });
 
-            previous.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    musicService.playPrevious();
-                }
-            });
+            preview.setTag(position);
+            previews.add(preview);
+            //managePreviews();
+            if(god.isNowPlayingPanelOpen()){
+                preview.setVisibility(View.INVISIBLE);
+            }else {
+                preview.setVisibility(View.VISIBLE);
+            }
 
 
             //if(song.getCoverArt() == null) song.getAlbum().setCoverArt("drawable://" + R.drawable.sample_art);
-            imageLoader.displayImage(song.getCoverArt(), albumArt, new ImageLoadingListener() {
-                @Override
-                public void onLoadingStarted(String imageUri, View view) {
-
-                }
-
-                @Override
-                public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
-
-                }
-
-                @Override
-                public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
-
-                    Palette.PaletteAsyncListener paletteListener = new Palette.PaletteAsyncListener() {
-                        public void onGenerated(Palette palette) {
-                            //holder.cardView.setCardBackgroundColor(palette.getVibrantColor(God.DEFAULT));
-                            //holder.artistName.setTextColor(Color.WHITE);
-                            //nowPlayingLayout.setBackgroundColor(palette.getVibrantColor(God.DEFAULT));
-
-                            if (palette.getVibrantSwatch() != null) {
-
-                                setColorsAccordingToSwatch(palette.getVibrantSwatch());
-                                song.setColor(palette.getVibrantSwatch().getRgb());
-
-
-                            } else if (palette.getMutedSwatch() != null) {
-
-                                setColorsAccordingToSwatch(palette.getMutedSwatch());
-                                song.setColor(palette.getMutedSwatch().getRgb());
-
-
-                            } else if (palette.getLightVibrantSwatch() != null) {
-
-                                setColorsAccordingToSwatch(palette.getLightVibrantSwatch());
-                                song.setColor(palette.getLightVibrantSwatch().getRgb());
-
-
-                            } else if (palette.getDarkVibrantSwatch() != null) {
-
-                                setColorsAccordingToSwatch(palette.getDarkVibrantSwatch());
-                                song.setColor(palette.getDarkVibrantSwatch().getRgb());
-
-
-                            } else if (palette.getLightMutedSwatch() != null) {
-
-                                setColorsAccordingToSwatch(palette.getLightMutedSwatch());
-                                song.setColor(palette.getLightMutedSwatch().getRgb());
-
-
-                            } else if (palette.getDarkMutedSwatch() != null) {
-
-                                setColorsAccordingToSwatch(palette.getDarkMutedSwatch());
-                                song.setColor(palette.getDarkMutedSwatch().getRgb());
-
-
-                            }
-                        }
-                    };
-
-                    if (loadedImage != null && !loadedImage.isRecycled()) {
-                        Palette.from(loadedImage).generate(paletteListener);
-                    }
-                }
-
-                @Override
-                public void onLoadingCancelled(String imageUri, View view) {
-
-                }
-            });
+            imageLoader.displayImage(song.getCoverArt(), albumArt);
 
             God.overrideFonts(rootView, font);
 
@@ -1201,40 +1205,69 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
             return rootView;
         }
 
-        private void setColorsAccordingToSwatch(Palette.Swatch swatch) {
 
-            nowPlayingLayout.setBackgroundColor(swatch.getRgb());
-            nowPlayingLayout.setTag(swatch.getRgb());
-            //title.setTextColor(swatch.getTitleTextColor());
-            currentTime.setTextColor(swatch.getTitleTextColor());
-            totalTime.setTextColor(swatch.getTitleTextColor());
+    }
+
+    private void setColorsAccordingToSwatch(Palette.Swatch swatch) {
+
+        nowPlayingLayout.setBackgroundColor(swatch.getRgb());
+        nowPlayingLayout.setTag(swatch.getRgb());
+        god.setNowPlayingStatusBarColor((int) nowPlayingLayout.getTag());
+        //title.setTextColor(swatch.getTitleTextColor());
+        currentTime.setTextColor(swatch.getTitleTextColor());
+        totalTime.setTextColor(swatch.getTitleTextColor());
 
 
-            //Log.d("COLOR", String.valueOf(swatch.getBodyTextColor()));
-            //slider.setBackgroundColor(swatch.getBodyTextColor());
-            String hexColor = String.format("#%06X", (0xFFFFFF & swatch.getBodyTextColor()));
-            //Log.d("HEX-COLOR", hexColor);
+        //Log.d("COLOR", String.valueOf(swatch.getBodyTextColor()));
+        //slider.setBackgroundColor(swatch.getBodyTextColor());
+        //String hexColor = String.format("#%06X", (0xFFFFFF & swatch.getBodyTextColor()));
+        //Log.d("HEX-COLOR", hexColor);
 
-            int intColor = swatch.getBodyTextColor();
-            int noAlphaColor = Color.argb(255, Color.red(intColor), Color.green(intColor), Color.blue(intColor));
-            slider.setProgressColor(Color.TRANSPARENT);
-            slider.setThumbColor(noAlphaColor);
-            slider.setProgressBackgroundColor(Color.TRANSPARENT);
-            slider.setAlpha(Color.alpha(intColor) / 255f);
+        int intColor = swatch.getBodyTextColor();
+        int noAlphaColor = Color.argb(255, Color.red(intColor), Color.green(intColor), Color.blue(intColor));
+        slider.setProgressColor(Color.TRANSPARENT);
+        slider.setThumbColor(noAlphaColor);
+        slider.setProgressBackgroundColor(Color.TRANSPARENT);
+        slider.setAlpha(Color.alpha(intColor) / 255f);
 
-            //Log.d("HEX-COLOR", Color.alpha(intColor) + " / 255 = " + (Color.alpha(intColor) / 255f));
+        //Log.d("HEX-COLOR", Color.alpha(intColor) + " / 255 = " + (Color.alpha(intColor) / 255f));
 
-            //artist.setTextColor(swatch.getBodyTextColor());
+        //artist.setTextColor(swatch.getBodyTextColor());
 
-            playPause.setColorFilter(swatch.getTitleTextColor(), PorterDuff.Mode.SRC_IN);
-            next.setColorFilter(swatch.getTitleTextColor(), PorterDuff.Mode.SRC_IN);
-            previous.setColorFilter(swatch.getTitleTextColor(), PorterDuff.Mode.SRC_IN);
-            repeatToggle.setColorFilter(swatch.getTitleTextColor(), PorterDuff.Mode.SRC_IN);
-            shuffleTogle.setColorFilter(swatch.getTitleTextColor(), PorterDuff.Mode.SRC_IN);
+        playPause.setColorFilter(swatch.getTitleTextColor(), PorterDuff.Mode.SRC_IN);
+        next.setColorFilter(swatch.getTitleTextColor(), PorterDuff.Mode.SRC_IN);
+        previous.setColorFilter(swatch.getTitleTextColor(), PorterDuff.Mode.SRC_IN);
+        repeatToggle.setColorFilter(swatch.getTitleTextColor(), PorterDuff.Mode.SRC_IN);
+        shuffleTogle.setColorFilter(swatch.getTitleTextColor(), PorterDuff.Mode.SRC_IN);
 
+    }
+
+    public static void managePreviews(){
+        ArrayList<Integer> toBeRemoved = new ArrayList<>();
+
+        for(int i = 0; i < previews.size(); i ++){
+            int tag = (int) previews.get(i).getTag();
+            int position = musicService.getPosition();
+            System.out.println(tag);
+            if (tag > position + 1 || tag < position - 1)toBeRemoved.add(i);
+        }
+
+        System.out.print(previews.size() + " -> ");
+
+        for(int i = 0; i < toBeRemoved.size(); i ++){
+            previews.remove(toBeRemoved.get(i));
+        }
+
+        System.out.println(previews.size());
+
+        for(int i = 0; i < previews.size(); i ++){
+            if ((int)previews.get(i).getTag() == musicService.getPosition())god.setPreview((RelativeLayout) previews.get(i));
         }
     }
 
+    public static ArrayList<View> getPreviews() {
+        return previews;
+    }
 
     @Override
     public void onBackPressed() {
@@ -1242,7 +1275,7 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
         if (nowPlayingPanel.getPanelState().equals(SlidingUpPanelLayout.PanelState.EXPANDED)) {
             if (queueSlidingPanel.getPanelState().equals(SlidingUpPanelLayout.PanelState.EXPANDED)) {
                 queueSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
-            }else {
+            } else {
                 nowPlayingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
             }
         } else {
@@ -1256,26 +1289,29 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
         Log.d(TAG, "OnDestroy called");
         super.onDestroy();
 
-        if(isFinishing()){
-            Log.d(TAG, "Activity is finishing");
-            Log.d(TAG, "Stopping service");
-            Intent stopIntent = new Intent(getApplicationContext(), MusicService.class);
-            stopService(stopIntent);
+        if (isFinishing()) {
+            //Log.d(TAG, "Activity is finishing");
+            //Log.d(TAG, "Stopping service");
+
+            if(!musicService.isPlaying()) {
+                Intent stopIntent = new Intent(getApplicationContext(), MusicService.class);
+                stopService(stopIntent);
+            }
         }
     }
 
-    private void bindMyService(){
+    private void bindMyService() {
         Log.d(TAG, "Bind Service called");
-        if(!musicBound){
+        if (!musicBound) {
             Log.d(TAG, "Binding Service ...");
 
             Intent bindIntent = new Intent(getApplicationContext(), MusicService.class);
-            musicBound = bindService(bindIntent, musicConnection, Context.BIND_AUTO_CREATE);
+            musicBound = bindService(bindIntent, musicConnection, Context.BIND_IMPORTANT);
         }
     }
 
 
-    private void unbindMyService(){
+    private void unbindMyService() {
         Log.d(TAG, "Unbind Service called");
         Log.d(TAG, "Unbinding Service ...");
         unbindService(musicConnection);
@@ -1287,14 +1323,14 @@ public class MainActivity extends AppCompatActivity implements LibraryFragment.O
     protected void onStart() {
         Log.d(TAG, "OnStart called");
         super.onStart();
-        if(!isChangingConfigurations())bindMyService();
+        if (!isChangingConfigurations()) bindMyService();
     }
 
     @Override
     protected void onStop() {
         Log.d(TAG, "OnStop called");
         super.onStop();
-        if(!isChangingConfigurations())unbindMyService();
+        if (!isChangingConfigurations()) unbindMyService();
     }
 
     @Override

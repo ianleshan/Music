@@ -2,7 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    >
 
 
     <LinearLayout
@@ -15,6 +16,7 @@
             android:layout_width="50dp"
             android:layout_height="84dp"
             android:layout_weight="0"
+            android:textColor="@color/text_color"
             android:text="1"
             android:gravity="center"/>
 
@@ -38,7 +40,7 @@
                 android:paddingTop="10dp"
                 android:singleLine="true"
                 android:text="Roar"
-                android:textColor="@color/main_color"
+                android:textColor="@color/text_color"
                 android:textSize="20sp" />
 
             <TextView
@@ -51,7 +53,7 @@
                 android:paddingTop="1dp"
                 android:singleLine="true"
                 android:text="Katy Perry"
-                android:textColor="@color/secondary_color"
+                android:textColor="@color/detail_color"
                 android:textSize="12sp" />
 
         </LinearLayout>
@@ -61,6 +63,7 @@
             android:layout_height="84dp"
             android:layout_weight="0"
             android:padding="18dp"
+            android:tint="@color/text_color"
             android:src="@mipmap/ic_more" />
 
     </LinearLayout>

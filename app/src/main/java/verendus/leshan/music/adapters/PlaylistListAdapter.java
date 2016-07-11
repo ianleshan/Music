@@ -52,7 +52,7 @@ public class PlaylistListAdapter extends RecyclerView.Adapter<PlaylistListAdapte
         this.imageLoader = imageLoader;
         this.playlists = playlists;
         inflater = LayoutInflater.from(c);
-        font = Typeface.createFromAsset(c.getAssets(), "font.ttf");
+        font = Typeface.createFromAsset(c.getAssets(), "boldFont.ttf");
     }
 
     @Override

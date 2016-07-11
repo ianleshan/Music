@@ -28,6 +28,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="2dp"
+                android:textColor="@color/text_color"
                 android:singleLine="true"
                 android:text="Miley Cyrus"
                 android:textSize="20sp" />

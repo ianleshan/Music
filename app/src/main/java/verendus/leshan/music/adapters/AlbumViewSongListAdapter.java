@@ -74,8 +74,8 @@ public class AlbumViewSongListAdapter extends RecyclerView.Adapter<RecyclerView.
         this.songs = songs;
         inflater = LayoutInflater.from(c);
         mainActivity = (MainActivity) c;
-        font = Typeface.createFromAsset(c.getAssets(), "font.ttf");
-        titleFont = Typeface.createFromAsset(c.getAssets(), "titleFont.ttf");
+        font = Typeface.createFromAsset(c.getAssets(), "Roboto-Regular.ttf");
+        titleFont = Typeface.createFromAsset(c.getAssets(), "boldFont.ttf");
     }
 
     @Override

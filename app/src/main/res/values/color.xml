@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="main_color">#ffc7c7c7</color>
-    <color name="secondary_color">#6fdadada</color>
+    <color name="text_color">#ffffff</color>
+    <color name="detail_color">#8dffffff</color>
 
-    <color name="background">#0e0e0e</color>
+    <color name="background">#000000</color>
+    <color name="card_background">#181818</color>
     <color name="highlight">#eeeeee</color>
 
 <!--
     <color name="primary">#f5bd30</color>
 -->
     <color name="primary">#fbc02d</color>
-    <color name="primary_dark">#000000</color>
-    <color name="accent">#000000</color>
 
     <color name="main_text_color">#f0000000</color>
     <color name="secondary_text_color">#cc000000</color>

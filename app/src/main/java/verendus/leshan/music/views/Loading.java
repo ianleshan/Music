@@ -20,7 +20,7 @@ public class Loading extends View{
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         rect.set(5,5,canvas.getClipBounds().right - 5,canvas.getClipBounds().bottom - 5);
-        paint.setColor(getResources().getColor(R.color.main_color));
+        paint.setColor(getResources().getColor(R.color.text_color));
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(5);
         paint.setDither(true);

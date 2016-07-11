@@ -52,7 +52,7 @@ public class GenreListAdapter extends RecyclerView.Adapter<GenreListAdapter.Recy
         this.imageLoader = imageLoader;
         this.genres = genres;
         inflater = LayoutInflater.from(c);
-        font = Typeface.createFromAsset(c.getAssets(), "font.ttf");
+        font = Typeface.createFromAsset(c.getAssets(), "boldFont.ttf");
     }
 
     @Override

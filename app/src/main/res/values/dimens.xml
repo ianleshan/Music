@@ -4,7 +4,7 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="divider_bar">1dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
-
+    <dimen name="vertical_padding">0dp</dimen>
 
 
 </resources>

@@ -24,7 +24,7 @@
             android:paddingTop="10dp"
             android:singleLine="true"
             android:text="Primary Text"
-            android:textColor="@color/main_color"
+            android:textColor="@color/text_color"
             android:textSize="20sp" />
 
         <TextView
@@ -37,7 +37,7 @@
             android:paddingTop="1dp"
             android:singleLine="true"
             android:text="Secondary Text"
-            android:textColor="@color/secondary_color"
+            android:textColor="@color/detail_color"
             android:textSize="12sp" />
 
     </LinearLayout>

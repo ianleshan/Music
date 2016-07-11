@@ -35,6 +35,14 @@ public class MyViewPager extends ViewPager{
     }
 
     @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+        int width = getMeasuredWidth();
+        setMeasuredDimension(width, width);
+    }
+
+    @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (!pagingEnabled) {
             return false; // do not consume

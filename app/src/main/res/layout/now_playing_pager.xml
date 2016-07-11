@@ -2,7 +2,9 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000">
+    android:paddingLeft="@dimen/vertical_padding"
+    android:paddingRight="@dimen/vertical_padding"
+    android:background="#00000000">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,7 +16,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_weight="0"
-            android:background="#212121"
+            android:background="@color/card_background"
             android:visibility="visible">
 
             <!--<com.gc.materialdesign.views.ProgressBarDeterminate
@@ -45,7 +47,7 @@
                     android:paddingTop="10dp"
                     android:singleLine="true"
                     android:text="Pick a song"
-                    android:textColor="#fff"
+                    android:textColor="@color/text_color"
                     android:textSize="22sp" />
 
 
@@ -60,7 +62,7 @@
                     android:paddingTop="1dp"
                     android:singleLine="true"
                     android:text="Any song"
-                    android:textColor="#fff"
+                    android:textColor="@color/detail_color"
                     android:textSize="14sp" />
 
 

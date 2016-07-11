@@ -33,20 +33,20 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:padding="2dp"
-                    android:singleLine="true"
+                    android:maxLines="1"
                     android:text="The Fame"
                     android:textSize="17sp"
-                    android:textColor="@color/main_color"/>
+                    android:textColor="@color/text_color"/>
 
                 <TextView
                     android:id="@+id/album_temp_artist"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:padding="2dp"
-                    android:singleLine="true"
+                    android:maxLines="1"
                     android:text="Lady Gaga"
                     android:textSize="12sp"
-                    android:textColor="@color/secondary_color"/>
+                    android:textColor="@color/detail_color"/>
             </LinearLayout>
 
             <ImageView
@@ -54,6 +54,7 @@
                 android:layout_width="28dp"
                 android:layout_height="match_parent"
                 android:layout_weight="0"
+                android:tint="@color/text_color"
                 android:src="@mipmap/ic_more"/>
 
         </LinearLayout>

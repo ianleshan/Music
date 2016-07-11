@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <verendus.leshan.music.views.MySlidingUpLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/tools"
     xmlns:sothree="http://schemas.android.com/apk/res-auto"
     android:id="@+id/queue_sliding_panel"
     android:layout_width="match_parent"
@@ -7,17 +8,12 @@
     android:gravity="bottom"
     sothree:umanoInitialState="expanded"
     sothree:umanoOverlay="true"
-    sothree:umanoPanelHeight="84dp"
-    sothree:umanoShadowHeight="0dp"
-    sothree:umanoParallaxOffset="200dp">
+    sothree:umanoPanelHeight="83dp"
+    sothree:umanoParallaxOffset="50dp"
+    sothree:umanoShadowHeight="0dp">
 
 
-    <verendus.leshan.music.views.MyViewPager
-        android:id="@+id/now_playing_view_pager"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-    </verendus.leshan.music.views.MyViewPager>
+    <include layout="@layout/now_playing_2"/>
 
     <LinearLayout xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
@@ -29,18 +25,18 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="0dp"
             android:layout_marginRight="0dp"
-            android:layout_marginTop="10dp"
-            app:cardBackgroundColor="#212121"
+            android:layout_marginTop="0dp"
+            app:cardBackgroundColor="@color/card_background"
             app:cardCornerRadius="0dp"
-            app:cardElevation="5dp">
+            app:cardElevation="10dp">
 
             <LinearLayout
-                android:id="@+id/queue_layout_header"
+                android:id="@+id/queue_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <include layout="@layout/queue_layout_header"/>
+                <include layout="@layout/queue_layout_header" />
 
 
                 <android.support.v7.widget.RecyclerView

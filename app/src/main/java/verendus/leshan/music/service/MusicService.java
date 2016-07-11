@@ -51,6 +51,7 @@ public class MusicService extends Service implements
 
     MediaPlayer mediaPlayer;
     AudioManager audioManager;
+    AudioManager.OnAudioFocusChangeListener onAudioFocusChangeListener;
     ArrayList<Song> queue;
     int songPosition;
     MusicChanger musicChanger;
@@ -62,6 +63,11 @@ public class MusicService extends Service implements
     boolean isInitialized = false;
     private God god;
 
+    private final String ACTION_PLAY_PAUSE = "action.play_pause";
+    private final String ACTION_PREVIOUS = "action.previous";
+    private final String ACTION_NEXT = "action.next";
+    private final String ACTION = "verendus.leshan.music";
+    private final String ACTION_STOP = "action.stop";
 
     private final IBinder musicBind = new MusicBinder();
 
@@ -73,8 +79,8 @@ public class MusicService extends Service implements
 
     @Override
     public boolean onUnbind(Intent intent) {
-        mediaPlayer.stop();
-        mediaPlayer.release();
+        //mediaPlayer.stop();
+        //mediaPlayer.release();
         return false;
     }
 
@@ -100,6 +106,8 @@ public class MusicService extends Service implements
     public void onCreate() {
         super.onCreate();
 
+        registerBroadcastReceivers();
+
         ComponentName receiver = new ComponentName(getPackageName(), RemoteReceiver.class.getName());
         mediaSession = new MediaSessionCompat(this, "PlayerService", receiver, null);
         mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
@@ -121,7 +129,7 @@ public class MusicService extends Service implements
                 .build());
 
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        audioManager.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
+        onAudioFocusChangeListener = new AudioManager.OnAudioFocusChangeListener() {
             @Override
             public void onAudioFocusChange(int focusChange) {
                 switch (focusChange) {
@@ -130,7 +138,7 @@ public class MusicService extends Service implements
                         if (mediaPlayer == null) initMediaPlayer();
                         else if (!mediaPlayer.isPlaying()) mediaPlayer.start();
                         mediaPlayer.setVolume(1.0f, 1.0f);
-                        Toast.makeText(getApplicationContext(),"Audio focus gained", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "Audio focus gained", Toast.LENGTH_SHORT).show();
                         break;
 
                     case AudioManager.AUDIOFOCUS_LOSS:
@@ -138,7 +146,8 @@ public class MusicService extends Service implements
                         if (mediaPlayer.isPlaying()) mediaPlayer.stop();
                         mediaPlayer.release();
                         mediaPlayer = null;
-                        Toast.makeText(getApplicationContext(),"Audio focus lost", Toast.LENGTH_SHORT).show();
+                        isInitialized = false;
+                        Toast.makeText(getApplicationContext(), "Audio focus lost", Toast.LENGTH_SHORT).show();
                         break;
 
                     case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
@@ -155,7 +164,7 @@ public class MusicService extends Service implements
                         break;
                 }
             }
-        }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        };
         mediaSession.setActive(true);
         mediaSession.setRatingType(RatingCompat.RATING_HEART);
 
@@ -166,18 +175,15 @@ public class MusicService extends Service implements
     @Override
     public void onDestroy() {
         super.onDestroy();
+        isInitialized = false;
         mediaSession.release();
         mediaPlayer.release();
-        audioManager.abandonAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
-            @Override
-            public void onAudioFocusChange(int focusChange) {
-
-            }
-        });
+        audioManager.abandonAudioFocus(onAudioFocusChangeListener);
         if (notification != null) {
-            //notificationManager.cancel(ID);
+            notificationManager.cancel(ID);
             stopForeground(true);
         }
+        if(god!=null)god.stopThreads();
     }
 
     @Override
@@ -233,138 +239,165 @@ public class MusicService extends Service implements
     }
 
     public void playSong() {
-        if(!isInitialized)initMediaPlayer();
-        if (mediaPlayer != null) mediaPlayer.reset();
-        //get song
-        final Song playSong = queue.get(songPosition);
-        //get id
-        long currSong = playSong.getSongId();
-        //set uri
-
-        long x = SystemClock.currentThreadTimeMillis();
-        Uri trackUri = ContentUris.withAppendedId(
-                android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                currSong);
-
-        try {
-            mediaPlayer.setDataSource(getApplicationContext(), trackUri);
-        } catch (IOException e) {
-            Log.e("MUSIC SERVICE", "Error setting data source", e);
-
-        } catch (Exception e) {
-            Log.e("MUSIC SERVICE", "Error setting data source", e);
-        }
-
-        try {
-            mediaPlayer.prepareAsync();
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        }
-        long timeTaken = SystemClock.currentThreadTimeMillis() - x;
-        Log.d("CALCULATING TIME :", God.formatTime((int)timeTaken));
-
-
-        God.getImageLoder(getApplicationContext()).loadImage(playSong.getCoverArt(), new ImageLoadingListener() {
+        Thread newThread = new Thread(new Runnable() {
             @Override
-            public void onLoadingStarted(String imageUri, View view) {
+            public void run() {
 
-            }
+                if (!isInitialized) initMediaPlayer();
+                audioManager.requestAudioFocus(onAudioFocusChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+                if (mediaPlayer != null) mediaPlayer.reset();
+                final Song song = queue.get(songPosition);
+                long songID = song.getSongId();
 
-            @Override
-            public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
+                long x = SystemClock.currentThreadTimeMillis();
+                Uri trackUri = ContentUris.withAppendedId(
+                        android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                        songID);
 
-            }
+                try {
+                    mediaPlayer.setDataSource(getApplicationContext(), trackUri);
+                } catch (IOException e) {
+                    Log.e("MUSIC SERVICE", "Error setting data source", e);
 
-            @Override
-            public void onLoadingComplete(String imageUri, View view, final Bitmap loadedImage) {
+                } catch (Exception e) {
+                    Log.e("MUSIC SERVICE", "Error setting data source", e);
+                }
 
-                Thread thread = new Thread(new Runnable() {
+                try {
+                    mediaPlayer.prepareAsync();
+                } catch (IllegalStateException e) {
+                    e.printStackTrace();
+                }
+                long timeTaken = SystemClock.currentThreadTimeMillis() - x;
+                Log.d("CALCULATING TIME :", God.formatTime((int) timeTaken));
+
+
+                God.getImageLoder(getApplicationContext()).loadImage(song.getCoverArt(), new ImageLoadingListener() {
                     @Override
-                    public void run() {
-                        mediaSession.setMetadata(new MediaMetadataCompat.Builder()
-                                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, playSong.getArtist())
-                                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, playSong.getAlbum())
-                                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, playSong.getTitle())
-                                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, 10000)
-                                .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART,
-                                        loadedImage)
-                                .build());
+                    public void onLoadingStarted(String imageUri, View view) {
 
-                        BroadcastReceiver pauseResumeBroadcastReceiver = new BroadcastReceiver() {
+                    }
+
+                    @Override
+                    public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
+
+                    }
+
+                    @Override
+                    public void onLoadingComplete(String imageUri, View view, final Bitmap loadedImage) {
+
+                        Thread thread = new Thread(new Runnable() {
                             @Override
-                            public void onReceive(Context context, Intent intent) {
-                                pauseResumeSong();
-                                Log.d("TAG ", "Pause Broadcast");
+                            public void run() {
+                                mediaSession.setMetadata(new MediaMetadataCompat.Builder()
+                                        .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, song.getArtist())
+                                        .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, song.getAlbum())
+                                        .putString(MediaMetadataCompat.METADATA_KEY_TITLE, song.getTitle())
+                                        .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, 10000)
+                                        .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART,
+                                                loadedImage)
+                                        .build());
+
+                                Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
+                                notificationIntent.setAction(Intent.ACTION_MAIN);
+                                notificationIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+                                PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+
+                                Intent nextIntent = new Intent(ACTION_NEXT);
+                                PendingIntent nextPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, nextIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+                                Intent previousIntent = new Intent(ACTION_PREVIOUS);
+                                PendingIntent previousPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, previousIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+                                Intent playIntent = new Intent(ACTION_PLAY_PAUSE);
+                                PendingIntent playPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, playIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+                                Intent stopIntent = new Intent(ACTION_STOP);
+                                PendingIntent stopPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, stopIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+
+                                notification = new NotificationCompat.Builder(getApplicationContext())
+                                        .setSmallIcon(R.drawable.ic_now_playing_notification)
+                                        .setContentTitle(song.getTitle())
+                                        .setColor(Color.parseColor("#212121"))
+                                        .setContentText(song.getArtist())
+                                        .setLargeIcon(loadedImage)
+                                        .setDeleteIntent(stopPendingIntent)
+                                        .setContentIntent(pendingIntent)
+                                        .addAction(R.drawable.ic_previous, "Previous", previousPendingIntent) // #0
+                                        .addAction(R.drawable.ic_pause, "Pause", playPendingIntent)  // #1
+                                        .addAction(R.drawable.ic_next, "Next", nextPendingIntent)     // #2
+                                        .addAction(R.mipmap.ic_queue_music, "Queue", null)
+                                        .setStyle(new NotificationCompat.MediaStyle()
+                                                .setShowActionsInCompactView(1)
+                                                .setMediaSession(mediaSession.getSessionToken()))
+                                        .build();
+
+                                notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                                notificationManager.notify(ID, notification);
+                                startForeground(ID, notification);
                             }
-                        };
-                        BroadcastReceiver previousBroadcastReceiver = new BroadcastReceiver() {
-                            @Override
-                            public void onReceive(Context context, Intent intent) {
-                                playPrevious();
-                                Log.d("TAG ", "Previous Broadcast");
+                        });
+                        thread.start();
 
-                            }
-                        };
-                        BroadcastReceiver nextBroadcastReceiver = new BroadcastReceiver() {
-                            @Override
-                            public void onReceive(Context context, Intent intent) {
-                                playNext();
-                                Log.d("TAG ", "Next Broadcast");
 
-                            }
-                        };
-                        registerReceiver(pauseResumeBroadcastReceiver, new IntentFilter("PauseResume"));
-                        registerReceiver(previousBroadcastReceiver, new IntentFilter("Previous"));
-                        registerReceiver(nextBroadcastReceiver, new IntentFilter("Next"));
+                    }
 
-                        Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
-                        notificationIntent.setAction(Intent.ACTION_MAIN);
-                        notificationIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-                        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
+                    @Override
+                    public void onLoadingCancelled(String imageUri, View view) {
 
-                        Intent playIntent = new Intent("PauseResume");
-                        PendingIntent playPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, playIntent, 0);
-
-                        Intent nextIntent = new Intent("Next");
-                        PendingIntent nextPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, nextIntent, 0);
-
-                        Intent previousIntent = new Intent("Previous");
-                        PendingIntent previousPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, previousIntent, 0);
-
-                        notification = new NotificationCompat.Builder(getApplicationContext())
-                                .setSmallIcon(R.drawable.ic_now_playing_notification)
-                                .setContentTitle(playSong.getTitle())
-                                .setColor(Color.parseColor("#212121"))
-                                .setContentText(playSong.getArtist())
-                                .setLargeIcon(loadedImage)
-                                .setContentIntent(pendingIntent)
-                                .addAction(R.drawable.ic_previous, "Previous", previousPendingIntent) // #0
-                                .addAction(R.drawable.ic_pause, "Pause", playPendingIntent)  // #1
-                                .addAction(R.drawable.ic_next, "Next", nextPendingIntent)     // #2
-                                .setStyle(new NotificationCompat.MediaStyle()
-                                        .setShowActionsInCompactView(1)
-                                        .setMediaSession(mediaSession.getSessionToken()))
-                                .build();
-
-                        notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                        //notificationManager.notify(ID, notification);
-                        startForeground(ID, notification);
                     }
                 });
-                //thread.start();
-
-
-            }
-
-            @Override
-            public void onLoadingCancelled(String imageUri, View view) {
 
             }
         });
 
+        newThread.start();
 
     }
 
+
+    public void registerBroadcastReceivers() {
+        BroadcastReceiver pauseResumeBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                pauseResumeSong();
+            }
+        };
+        BroadcastReceiver previousBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                playPrevious();
+
+            }
+        };
+        BroadcastReceiver nextBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                playNext();
+
+            }
+        };
+        BroadcastReceiver becomingNoisy = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                pauseSong();
+                Toast.makeText(getApplicationContext(), "Headphones, where art you??", Toast.LENGTH_SHORT).show();
+            }
+        };
+        BroadcastReceiver stopService = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                stopSelf();
+            }
+        };
+        registerReceiver(pauseResumeBroadcastReceiver, new IntentFilter(ACTION_PLAY_PAUSE));
+        registerReceiver(previousBroadcastReceiver, new IntentFilter(ACTION_PREVIOUS));
+        registerReceiver(nextBroadcastReceiver, new IntentFilter(ACTION_NEXT));
+        registerReceiver(stopService, new IntentFilter(ACTION_STOP));
+        registerReceiver(becomingNoisy, new IntentFilter(android.media.AudioManager.ACTION_AUDIO_BECOMING_NOISY));
+    }
 
 
     public void pauseSong() {
@@ -377,22 +410,26 @@ public class MusicService extends Service implements
     public void resumeSong() {
         mediaPlayer.start();
         //mediaPlayer.seekTo(pausePosition);
-        //startForeground(ID, notification);
+        startForeground(ID, notification);
     }
 
-    public void pauseResumeSong(){
-        if(mediaPlayer != null){
-            if(mediaPlayer.isPlaying()){
+    public void pauseResumeSong() {
+        if (mediaPlayer != null) {
+            if (mediaPlayer.isPlaying()) {
                 pauseSong();
-            }else {
+            } else {
                 resumeSong();
             }
         }
     }
 
     public boolean isPlaying() {
-        if(!isInitialized)initMediaPlayer();
-        return mediaPlayer.isPlaying();
+        if (!isInitialized){
+            //initMediaPlayer();
+            return false;
+        }else {
+            return mediaPlayer.isPlaying();
+        }
     }
 
     public void playPrevious() {

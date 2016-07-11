@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <verendus.leshan.music.views.MyViewPager
+        android:id="@+id/now_playing_view_pager"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0">
+
+    </verendus.leshan.music.views.MyViewPager>
+
+    <LinearLayout
+        android:id="@+id/now_playing_layout"
+        android:layout_width="fill_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@color/background"
+        android:orientation="vertical"
+        android:paddingBottom="98dp">
+
+
+        <LinearLayout
+            android:id="@+id/timeControl"
+            android:layout_width="fill_parent"
+            android:layout_height="26dp"
+            android:layout_weight="0"
+            android:background="#20000000"
+            android:orientation="horizontal"
+            android:weightSum="90">
+
+            <TextView
+                android:id="@+id/now_playing_curr_time"
+                android:layout_width="fill_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="40"
+                android:gravity="right|center"
+                android:text="00:00"
+                android:textColor="@color/main_text_color"
+                android:textSize="12sp" />
+
+            <app.minimize.com.seek_bar_compat.SeekBarCompat
+                android:id="@+id/now_playing_slider"
+                android:layout_width="fill_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:layout_weight="10"
+                android:maxHeight="2400dp"
+                android:minHeight="2400dp"
+                android:thumb="@drawable/slider_line"
+                app:progressBackgroundColor="#00ffffff"
+                app:progressColor="#00ffffff"
+                app:thumbColor="@color/main_text_color" />
+
+            <TextView
+                android:id="@+id/now_playing_total_time"
+                android:layout_width="fill_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="40"
+                android:gravity="left|center"
+                android:text="00:00"
+                android:textColor="@color/main_text_color"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:id="@+id/controls"
+            android:layout_width="fill_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:weightSum="5">
+
+
+            <ImageView
+                android:id="@+id/repeat_toggle"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:padding="22dp"
+                android:paddingLeft="5dp"
+                android:src="@mipmap/ic_repeat"
+                android:tint="@color/main_text_color" />
+
+            <ImageView
+                android:id="@+id/previous"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:padding="20dp"
+                android:src="@drawable/ic_previous"
+                android:tint="@color/main_text_color" />
+
+            <ImageView
+                android:id="@+id/play_pause"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:padding="20dp"
+                android:src="@drawable/ic_pause"
+                android:tint="@color/main_text_color" />
+
+            <ImageView
+                android:id="@+id/next"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:padding="20dp"
+                android:src="@drawable/ic_next"
+                android:tint="@color/main_text_color" />
+
+            <ImageView
+                android:id="@+id/shuffle_toggle"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:padding="22dp"
+                android:paddingRight="5dp"
+                android:src="@mipmap/ic_shuffle"
+                android:tint="@color/main_text_color" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

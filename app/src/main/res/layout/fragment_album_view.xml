@@ -47,7 +47,7 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:padding="10dp"
-        android:background="#ff191919"
+        android:background="@color/card_background"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
     </android.support.v7.widget.RecyclerView>

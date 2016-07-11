@@ -61,22 +61,16 @@ public class AlbumViewFragment extends Fragment {
     Toolbar toolbar;
     CollapsingToolbarLayout collapsingToolbarLayout;
     View rootView;
-    Interpolator interpolator = new AccelerateDecelerateInterpolator();
-
-    int startingX, startingY, width;
 
     public AlbumViewFragment() {
         // Required empty public constructor
     }
 
     // TODO: Rename and change types and number of parameters
-    public static AlbumViewFragment newInstance(int position, int x, int y, int width) {
+    public static AlbumViewFragment newInstance(int position) {
         AlbumViewFragment fragment = new AlbumViewFragment();
         Bundle args = new Bundle();
         args.putInt("album", position);
-        args.putInt("x", x);
-        args.putInt("y", y);
-        args.putInt("w", width);
         fragment.setArguments(args);
         return fragment;
     }
@@ -88,23 +82,20 @@ public class AlbumViewFragment extends Fragment {
         if (getArguments() != null) {
             mainActivity = (MainActivity) getActivity();
             album = mainActivity.getGod().getAlbums().get(getArguments().getInt("album"));
-            startingX = getArguments().getInt("x");
-            startingY = getArguments().getInt("y");
-            width = getArguments().getInt("w");
         }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        setHasOptionsMenu(false);
         // Inflate the layout for this fragment
         rootView = inflater.inflate(R.layout.fragment_album_view, container, false);
-        rootView.setVisibility(View.INVISIBLE);
 
         fab = (FloatingActionButton) rootView.findViewById(R.id.album_view_fab);
-        fab.hide();
+        //fab.hide();
         recyclerView = (RecyclerView) rootView.findViewById(R.id.album_view_song_list);
-        recyclerView.setVisibility(View.INVISIBLE);
         imageView = (SquaredImageView) rootView.findViewById(R.id.album_view_album_art);
         toolbar = (Toolbar) rootView.findViewById(R.id.album_view_toolbar);
         collapsingToolbarLayout = (CollapsingToolbarLayout) rootView.findViewById(R.id.album_view_collapsing_toolbar_layout);
@@ -139,8 +130,8 @@ public class AlbumViewFragment extends Fragment {
 
 
 
-        Typeface font = Typeface.createFromAsset(getActivity().getAssets(), "font.ttf");
-        Typeface titleFont = Typeface.createFromAsset(getActivity().getAssets(), "titleFont.ttf");
+        Typeface font = Typeface.createFromAsset(getActivity().getAssets(), "Roboto-Regular.ttf");
+        Typeface titleFont = Typeface.createFromAsset(getActivity().getAssets(), "boldFont.ttf");
 
         collapsingToolbarLayout.setCollapsedTitleTypeface(font);
         collapsingToolbarLayout.setExpandedTitleTypeface(font);
@@ -193,7 +184,6 @@ public class AlbumViewFragment extends Fragment {
                             setColorsAccordingToSwatch(palette.getDarkMutedSwatch() , fab, collapsingToolbarLayout);
 
                         }
-                        enterAnimation();
                     }
                 };
 
@@ -220,157 +210,6 @@ public class AlbumViewFragment extends Fragment {
         collapsingToolbarLayout.setCollapsedTitleTextColor(swatch.getTitleTextColor());
         collapsingToolbarLayout.setStatusBarScrimColor(swatch.getRgb());
 
-    }
-
-    private void enterAnimation(){
-        WindowManager wm = (WindowManager) getView().getContext().getSystemService(Context.WINDOW_SERVICE);
-        Display display = wm.getDefaultDisplay();
-
-        float screenWidth = (float) display.getWidth();
-        float screenHeight = (float) display.getHeight();
-
-        rootView.setPivotX(0);
-        rootView.setPivotY(0);
-        ObjectAnimator moveX = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_X, startingX, 0);
-        ObjectAnimator moveY = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_Y, startingY - 50, 0);
-        //ObjectAnimator moveY = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_Y, screenHeight, 0);
-
-        moveY.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                float value = animation.getAnimatedFraction();
-                Log.d("VALUE", value + "");
-            }
-        });
-
-
-
-        Log.d("WIDTH :", width+"");
-        Log.d("WIDTH2 :", screenWidth+"");
-        Log.d("XXX :", startingX+"");
-        Log.d("YYY :", startingY+"");
-
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(rootView, View.SCALE_X, (width / screenWidth), 1);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(rootView, View.SCALE_Y, (width / screenWidth), 1);
-
-        moveY.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                fab.show();
-                recyclerView.setVisibility(View.VISIBLE);
-                ObjectAnimator.ofFloat(recyclerView, View.ALPHA, 0, 1).start();
-                ObjectAnimator.ofFloat(recyclerView, View.TRANSLATION_Y, 100, 0).start();
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
-            }
-        });
-
-        int duration = 400;
-        moveX.setDuration(duration);
-        moveY.setDuration(duration);
-        scaleX.setDuration(duration);
-        scaleY.setDuration(duration);
-
-        moveX.setInterpolator(interpolator);
-        moveY.setInterpolator(interpolator);
-        scaleX.setInterpolator(interpolator);
-        scaleY.setInterpolator(interpolator);
-
-        rootView.setVisibility(View.VISIBLE);
-        moveX.start();
-        moveY.start();
-        scaleX.start();
-        scaleY.start();
-    }
-
-    private void exitAnimation(){
-        WindowManager wm = (WindowManager) getView().getContext().getSystemService(Context.WINDOW_SERVICE);
-        Display display = wm.getDefaultDisplay();
-
-        float screenWidth = (float) display.getWidth();
-        float screenHeight = (float) display.getHeight();
-
-        rootView.setPivotX(0);
-        rootView.setPivotY(0);
-        ObjectAnimator moveX = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_X, 0, startingX);
-        ObjectAnimator moveY = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_Y, 0, startingY - 50);
-        //ObjectAnimator moveY = ObjectAnimator.ofFloat(rootView, View.TRANSLATION_Y, screenHeight, 0);
-
-        moveY.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                float value = animation.getAnimatedFraction();
-                Log.d("VALUE", value + "");
-            }
-        });
-
-
-
-        Log.d("WIDTH :", width+"");
-        Log.d("WIDTH2 :", screenWidth+"");
-        Log.d("XXX :", startingX+"");
-        Log.d("YYY :", startingY+"");
-
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(rootView, View.SCALE_X, 1, (width / screenWidth));
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(rootView, View.SCALE_Y, 1, (width / screenWidth));
-
-        moveY.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                fab.show();
-                recyclerView.setVisibility(View.VISIBLE);
-
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
-            }
-        });
-
-
-        ObjectAnimator.ofFloat(recyclerView, View.ALPHA, 0, 1).start();
-        ObjectAnimator.ofFloat(recyclerView, View.TRANSLATION_Y, 100, 0).start();
-
-        int duration = 400;
-        moveX.setDuration(duration);
-        moveY.setDuration(duration);
-        scaleX.setDuration(duration);
-        scaleY.setDuration(duration);
-
-        moveX.setInterpolator(interpolator);
-        moveY.setInterpolator(interpolator);
-        scaleX.setInterpolator(interpolator);
-        scaleY.setInterpolator(interpolator);
-
-        rootView.setVisibility(View.VISIBLE);
-        moveX.start();
-        moveY.start();
-        scaleX.start();
-        scaleY.start();
     }
 
     // TODO: Rename method, update argument and hook method into UI event
