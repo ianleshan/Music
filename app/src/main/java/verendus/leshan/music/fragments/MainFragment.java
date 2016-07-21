@@ -702,7 +702,7 @@ public class MainFragment extends Fragment implements LibraryFragment.OnFragment
             });
 
 
-            //if(song.getCoverArt() == null) song.getAlbum().setCoverArt("drawable://" + R.drawable.sample_art);
+            //if(song.getCoverArt() == null) song.getAlbumName().setCoverArt("drawable://" + R.drawable.sample_art);
             imageLoader.displayImage(song.getCoverArt(), albumArt, new ImageLoadingListener() {
                 @Override
                 public void onLoadingStarted(String imageUri, View view) {

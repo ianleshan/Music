@@ -60,6 +60,7 @@
         </LinearLayout>
 
         <ImageView
+            android:id="@+id/queue_layout_header_more"
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:layout_weight="0"

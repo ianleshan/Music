@@ -16,6 +16,9 @@ import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.audiofx.AudioEffect;
+import android.media.audiofx.BassBoost;
+import android.media.audiofx.EnvironmentalReverb;
+import android.media.audiofx.Equalizer;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
@@ -50,6 +53,9 @@ public class MusicService extends Service implements
         MediaPlayer.OnErrorListener {
 
     MediaPlayer mediaPlayer;
+    Equalizer equalizer;
+    BassBoost bassBoost;
+    EnvironmentalReverb environmentalReverb;
     AudioManager audioManager;
     AudioManager.OnAudioFocusChangeListener onAudioFocusChangeListener;
     ArrayList<Song> queue;
@@ -178,12 +184,15 @@ public class MusicService extends Service implements
         isInitialized = false;
         mediaSession.release();
         mediaPlayer.release();
+        equalizer.release();
+        bassBoost.release();
+        environmentalReverb.release();
         audioManager.abandonAudioFocus(onAudioFocusChangeListener);
         if (notification != null) {
             notificationManager.cancel(ID);
             stopForeground(true);
         }
-        if(god!=null)god.stopThreads();
+        if (god != null) god.stopThreads();
     }
 
     @Override
@@ -203,7 +212,6 @@ public class MusicService extends Service implements
     }
 
     public void initMediaPlayer() {
-        AudioEffect audioEffect;
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -211,6 +219,15 @@ public class MusicService extends Service implements
         mediaPlayer.setOnPreparedListener(this);
         mediaPlayer.setOnCompletionListener(this);
         mediaPlayer.setOnErrorListener(this);
+
+        equalizer = new Equalizer(0, mediaPlayer.getAudioSessionId());
+        equalizer.setEnabled(true);
+
+        bassBoost = new BassBoost(0, mediaPlayer.getAudioSessionId());
+        bassBoost.setEnabled(true);
+
+        environmentalReverb = new EnvironmentalReverb(0, mediaPlayer.getAudioSessionId());
+        environmentalReverb.setEnabled(false);
 
         isInitialized = true;
     }
@@ -249,7 +266,6 @@ public class MusicService extends Service implements
                 final Song song = queue.get(songPosition);
                 long songID = song.getSongId();
 
-                long x = SystemClock.currentThreadTimeMillis();
                 Uri trackUri = ContentUris.withAppendedId(
                         android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                         songID);
@@ -268,8 +284,6 @@ public class MusicService extends Service implements
                 } catch (IllegalStateException e) {
                     e.printStackTrace();
                 }
-                long timeTaken = SystemClock.currentThreadTimeMillis() - x;
-                Log.d("CALCULATING TIME :", God.formatTime((int) timeTaken));
 
 
                 God.getImageLoder(getApplicationContext()).loadImage(song.getCoverArt(), new ImageLoadingListener() {
@@ -286,60 +300,54 @@ public class MusicService extends Service implements
                     @Override
                     public void onLoadingComplete(String imageUri, View view, final Bitmap loadedImage) {
 
-                        Thread thread = new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                mediaSession.setMetadata(new MediaMetadataCompat.Builder()
-                                        .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, song.getArtist())
-                                        .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, song.getAlbum())
-                                        .putString(MediaMetadataCompat.METADATA_KEY_TITLE, song.getTitle())
-                                        .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, 10000)
-                                        .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART,
-                                                loadedImage)
-                                        .build());
+                        mediaSession.setMetadata(new MediaMetadataCompat.Builder()
+                                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, song.getArtist())
+                                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, song.getAlbumName())
+                                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, song.getTitle())
+                                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, 10000)
+                                .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART,
+                                        loadedImage)
+                                .build());
 
-                                Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
-                                notificationIntent.setAction(Intent.ACTION_MAIN);
-                                notificationIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-                                PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+                        Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
+                        notificationIntent.setAction(Intent.ACTION_MAIN);
+                        notificationIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+                        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
 
-                                Intent nextIntent = new Intent(ACTION_NEXT);
-                                PendingIntent nextPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, nextIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+                        Intent nextIntent = new Intent(ACTION_NEXT);
+                        PendingIntent nextPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, nextIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
-                                Intent previousIntent = new Intent(ACTION_PREVIOUS);
-                                PendingIntent previousPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, previousIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+                        Intent previousIntent = new Intent(ACTION_PREVIOUS);
+                        PendingIntent previousPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, previousIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
-                                Intent playIntent = new Intent(ACTION_PLAY_PAUSE);
-                                PendingIntent playPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, playIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+                        Intent playIntent = new Intent(ACTION_PLAY_PAUSE);
+                        PendingIntent playPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, playIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
-                                Intent stopIntent = new Intent(ACTION_STOP);
-                                PendingIntent stopPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, stopIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+                        Intent stopIntent = new Intent(ACTION_STOP);
+                        PendingIntent stopPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, stopIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
 
-                                notification = new NotificationCompat.Builder(getApplicationContext())
-                                        .setSmallIcon(R.drawable.ic_now_playing_notification)
-                                        .setContentTitle(song.getTitle())
-                                        .setColor(Color.parseColor("#212121"))
-                                        .setContentText(song.getArtist())
-                                        .setLargeIcon(loadedImage)
-                                        .setDeleteIntent(stopPendingIntent)
-                                        .setContentIntent(pendingIntent)
-                                        .addAction(R.drawable.ic_previous, "Previous", previousPendingIntent) // #0
-                                        .addAction(R.drawable.ic_pause, "Pause", playPendingIntent)  // #1
-                                        .addAction(R.drawable.ic_next, "Next", nextPendingIntent)     // #2
-                                        .addAction(R.mipmap.ic_queue_music, "Queue", null)
-                                        .setStyle(new NotificationCompat.MediaStyle()
-                                                .setShowActionsInCompactView(1)
-                                                .setMediaSession(mediaSession.getSessionToken()))
-                                        .build();
+                        notification = new NotificationCompat.Builder(getApplicationContext())
+                                .setSmallIcon(R.drawable.ic_now_playing_notification)
+                                .setContentTitle(song.getTitle())
+                                .setColor(Color.parseColor("#212121"))
+                                .setContentText(song.getArtist())
+                                .setLargeIcon(loadedImage)
+                                .setDeleteIntent(stopPendingIntent)
+                                .setContentIntent(pendingIntent)
+                                .addAction(R.drawable.ic_previous, "Previous", previousPendingIntent) // #0
+                                .addAction(R.drawable.ic_pause, "Pause", playPendingIntent)  // #1
+                                .addAction(R.drawable.ic_next, "Next", nextPendingIntent)     // #2
+                                .addAction(R.mipmap.ic_queue_music, "Queue", null)
+                                .setStyle(new NotificationCompat.MediaStyle()
+                                        .setShowActionsInCompactView(1)
+                                        .setMediaSession(mediaSession.getSessionToken()))
+                                .build();
 
-                                notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                                notificationManager.notify(ID, notification);
-                                startForeground(ID, notification);
-                            }
-                        });
-                        thread.start();
+                        notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                        notificationManager.notify(ID, notification);
+                        startForeground(ID, notification);
 
 
                     }
@@ -424,10 +432,10 @@ public class MusicService extends Service implements
     }
 
     public boolean isPlaying() {
-        if (!isInitialized){
+        if (!isInitialized) {
             //initMediaPlayer();
             return false;
-        }else {
+        } else {
             return mediaPlayer.isPlaying();
         }
     }
@@ -445,6 +453,14 @@ public class MusicService extends Service implements
         songPosition++;
         if (songPosition == queue.size()) songPosition = 0;
         playSong();
+    }
+
+    public Equalizer getEqualizer() {
+        return equalizer;
+    }
+
+    public BassBoost getBassBoost() {
+        return bassBoost;
     }
 
     public int getPosition() {

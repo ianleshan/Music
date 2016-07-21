@@ -226,15 +226,15 @@ public class MainActivityTest {}/*extends AppCompatActivity implements MusicChan
                             allSongs.add(song);
                             boolean isSOngAlreadyInAlbum = false;
                             for(Album album : albums){
-                                if(song.getAlbum().contentEquals(album.getName())){
+                                if(song.getAlbumName().contentEquals(album.getName())){
                                     isSOngAlreadyInAlbum = true;
                                     album.addSong(song);
                                 }
                             }
                             if(!isSOngAlreadyInAlbum){
-                                Album album = new Album(song.getAlbum(),
+                                Album album = new Album(song.getAlbumName(),
                                         song.getArtist(),
-                                        getAlbumArt(song.getAlbum(), song.getArtist()));
+                                        getAlbumArt(song.getAlbumName(), song.getArtist()));
                                 album.addSong(song);
                                 albums.add(album);
                             }

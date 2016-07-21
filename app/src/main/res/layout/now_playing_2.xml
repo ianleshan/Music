@@ -1,132 +1,184 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <verendus.leshan.music.views.MyViewPager
-        android:id="@+id/now_playing_view_pager"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="0">
-
-    </verendus.leshan.music.views.MyViewPager>
-
     <LinearLayout
-        android:id="@+id/now_playing_layout"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="@color/background"
-        android:orientation="vertical"
-        android:paddingBottom="98dp">
+        android:orientation="vertical">
 
+        <verendus.leshan.music.views.MyViewPager
+            android:id="@+id/now_playing_view_pager"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0">
 
-        <LinearLayout
-            android:id="@+id/timeControl"
-            android:layout_width="fill_parent"
-            android:layout_height="26dp"
-            android:layout_weight="0"
-            android:background="#20000000"
-            android:orientation="horizontal"
-            android:weightSum="90">
-
-            <TextView
-                android:id="@+id/now_playing_curr_time"
-                android:layout_width="fill_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="40"
-                android:gravity="right|center"
-                android:text="00:00"
-                android:textColor="@color/main_text_color"
-                android:textSize="12sp" />
-
-            <app.minimize.com.seek_bar_compat.SeekBarCompat
-                android:id="@+id/now_playing_slider"
-                android:layout_width="fill_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="center"
-                android:layout_weight="10"
-                android:maxHeight="2400dp"
-                android:minHeight="2400dp"
-                android:thumb="@drawable/slider_line"
-                app:progressBackgroundColor="#00ffffff"
-                app:progressColor="#00ffffff"
-                app:thumbColor="@color/main_text_color" />
-
-            <TextView
-                android:id="@+id/now_playing_total_time"
-                android:layout_width="fill_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="40"
-                android:gravity="left|center"
-                android:text="00:00"
-                android:textColor="@color/main_text_color"
-                android:textSize="12sp" />
-
-        </LinearLayout>
-
+        </verendus.leshan.music.views.MyViewPager>
 
         <LinearLayout
-            android:id="@+id/controls"
+            android:id="@+id/now_playing_layout"
             android:layout_width="fill_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:weightSum="5">
+            android:background="@color/card_background"
+            android:orientation="vertical"
+            android:paddingBottom="98dp">
 
 
-            <ImageView
-                android:id="@+id/repeat_toggle"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
+            <LinearLayout
+                android:id="@+id/timeControl"
+                android:layout_width="fill_parent"
+                android:layout_height="26dp"
+                android:layout_weight="0"
+                android:background="#20000000"
+                android:orientation="horizontal"
+                android:weightSum="90">
+
+                <TextView
+                    android:id="@+id/now_playing_curr_time"
+                    android:layout_width="fill_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="40"
+                    android:gravity="right|center"
+                    android:text="00:00"
+                    android:textColor="@color/main_text_color"
+                    android:textSize="12sp" />
+
+                <app.minimize.com.seek_bar_compat.SeekBarCompat
+                    android:id="@+id/now_playing_slider"
+                    android:layout_width="fill_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:layout_weight="10"
+                    android:maxHeight="2400dp"
+                    android:minHeight="2400dp"
+                    android:thumb="@drawable/slider_line"
+                    app:progressBackgroundColor="#00ffffff"
+                    app:progressColor="#00ffffff"
+                    app:thumbColor="@color/main_text_color" />
+
+                <TextView
+                    android:id="@+id/now_playing_total_time"
+                    android:layout_width="fill_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="40"
+                    android:gravity="left|center"
+                    android:text="00:00"
+                    android:textColor="@color/main_text_color"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:id="@+id/controls"
+                android:layout_width="fill_parent"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:padding="22dp"
-                android:paddingLeft="5dp"
-                android:src="@mipmap/ic_repeat"
-                android:tint="@color/main_text_color" />
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:weightSum="5">
 
-            <ImageView
-                android:id="@+id/previous"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:layout_weight="1"
-                android:padding="20dp"
-                android:src="@drawable/ic_previous"
-                android:tint="@color/main_text_color" />
 
-            <ImageView
-                android:id="@+id/play_pause"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:layout_weight="1"
-                android:padding="20dp"
-                android:src="@drawable/ic_pause"
-                android:tint="@color/main_text_color" />
+                <ImageView
+                    android:id="@+id/repeat_toggle"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_weight="1"
+                    android:padding="22dp"
+                    android:paddingLeft="5dp"
+                    android:src="@mipmap/ic_repeat"
+                    android:tint="@color/main_text_color" />
 
-            <ImageView
-                android:id="@+id/next"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:layout_weight="1"
-                android:padding="20dp"
-                android:src="@drawable/ic_next"
-                android:tint="@color/main_text_color" />
+                <ImageView
+                    android:id="@+id/previous"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_weight="1"
+                    android:padding="20dp"
+                    android:src="@drawable/ic_previous"
+                    android:tint="@color/main_text_color"
+                    style="@style/UnboundedRipple"/>
 
-            <ImageView
-                android:id="@+id/shuffle_toggle"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:layout_weight="1"
-                android:padding="22dp"
-                android:paddingRight="5dp"
-                android:src="@mipmap/ic_shuffle"
-                android:tint="@color/main_text_color" />
+                <com.wnafee.vector.MorphButton
+                    android:id="@+id/play_pause"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_weight="1"
+                    android:padding="20dp"
+                    app:vc_startDrawable="@drawable/ic_pause_to_play"
+                    app:vc_endDrawable="@drawable/ic_play_to_pause"
+                    android:tint="@color/main_text_color"
+                    style="@style/UnboundedRipple"/>
+
+                <ImageView
+                    android:id="@+id/next"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_weight="1"
+                    android:padding="20dp"
+                    android:src="@drawable/ic_next"
+                    android:tint="@color/main_text_color"
+                    style="@style/UnboundedRipple"/>
+
+                <ImageView
+                    android:id="@+id/shuffle_toggle"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_weight="1"
+                    android:padding="22dp"
+                    android:paddingRight="5dp"
+                    android:src="@mipmap/ic_shuffle"
+                    android:tint="@color/main_text_color" />
+
+            </LinearLayout>
 
         </LinearLayout>
-
     </LinearLayout>
 
-</LinearLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="76dp"
+        android:background="@color/card_background"
+        android:id="@+id/now_playing_preview">
+
+        <!--<com.gc.materialdesign.views.ProgressBarDeterminate
+                android:id="@+id/now_playing_preview_progress"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/accent">
+
+            </com.gc.materialdesign.views.ProgressBarDeterminate>-->
+
+        <android.support.v4.view.ViewPager
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:id="@+id/now_playing_preview_pager"
+            android:layout_alignParentStart="true"
+            android:layout_toLeftOf="@+id/now_playing_preview_play_pause"
+            android:layout_toStartOf="@+id/now_playing_preview_play_pause">
+
+
+        </android.support.v4.view.ViewPager>
+
+        <ImageView
+            android:id="@+id/now_playing_preview_play_pause"
+            android:layout_width="76dp"
+            android:layout_height="76dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_gravity="right"
+            android:padding="15dp"
+            android:src="@drawable/ic_pause"
+            android:tint="@color/text_color"
+            style="@style/UnboundedRipple"/>
+
+    </RelativeLayout>
+
+
+</RelativeLayout>

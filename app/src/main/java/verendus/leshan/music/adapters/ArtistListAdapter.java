@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.CardView;
@@ -18,6 +19,8 @@ import android.widget.TextView;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -37,6 +40,7 @@ public class ArtistListAdapter extends RecyclerView.Adapter<ArtistListAdapter.Al
 
     ArrayList<Artist> artists;
     LayoutInflater inflater;
+    Context context;
     Typeface font;
     ImageLoader imageLoader;
     ImageView iv;
@@ -70,6 +74,7 @@ public class ArtistListAdapter extends RecyclerView.Adapter<ArtistListAdapter.Al
         this.imageLoader = imageLoader;
         this.artists = artists;
         inflater = LayoutInflater.from(c);
+        context = c;
         font = Typeface.createFromAsset(c.getAssets(), "boldFont.ttf");
     }
 
@@ -102,19 +107,11 @@ public class ArtistListAdapter extends RecyclerView.Adapter<ArtistListAdapter.Al
         //new RetrieveArtistFeedTask().execute(currArtist.getName());
 
         if(currArtist.getCoverArt() == null) currArtist.setCoverArt("drawable://" + R.drawable.sample_art);
-        imageLoader.displayImage(currArtist.getCoverArt(), holder.albumCover, new ImageLoadingListener() {
+
+        Target target = new Target() {
             @Override
-            public void onLoadingStarted(String imageUri, View view) {
-
-            }
-
-            @Override
-            public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
-
-            }
-
-            @Override
-            public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                holder.albumCover.setImageBitmap(bitmap);
 
                 Palette.PaletteAsyncListener paletteListener = new Palette.PaletteAsyncListener() {
                     public void onGenerated(Palette palette) {
@@ -146,16 +143,25 @@ public class ArtistListAdapter extends RecyclerView.Adapter<ArtistListAdapter.Al
                     }
                 };
 
-                if (loadedImage != null && !loadedImage.isRecycled()) {
-                    Palette.from(loadedImage).generate(paletteListener);
+                if (bitmap != null && !bitmap.isRecycled()) {
+                    Palette.from(bitmap).generate(paletteListener);
                 }
             }
 
             @Override
-            public void onLoadingCancelled(String imageUri, View view) {
+            public void onBitmapFailed(Drawable errorDrawable) {
 
             }
-        });
+
+            @Override
+            public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+            }
+        };
+
+        Picasso.with(context)
+                .load(currArtist.getCoverArt())
+                .into(target);
         holder.albumCover.setMinimumHeight(holder.albumCover.getMeasuredWidth());
         holder.itemView.setTag(position);
     }

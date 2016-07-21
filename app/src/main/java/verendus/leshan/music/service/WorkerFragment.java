@@ -11,15 +11,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-
-import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -32,8 +24,6 @@ import java.util.Collections;
 import java.util.Comparator;
 
 import verendus.leshan.music.MainActivity;
-import verendus.leshan.music.R;
-import verendus.leshan.music.fragments.LibraryFragment;
 import verendus.leshan.music.objects.Album;
 import verendus.leshan.music.objects.Artist;
 import verendus.leshan.music.objects.Genre;
@@ -266,17 +256,19 @@ public class WorkerFragment extends Fragment {
                     songs.add(song);
                     boolean isSOngAlreadyInAlbum = false;
                     for (Album album : albums) {
-                        if (song.getAlbum().contentEquals(album.getName())) {
+                        if (song.getAlbumName().contentEquals(album.getName())) {
                             isSOngAlreadyInAlbum = true;
+                            song.setAlbum(album);
                             album.addSong(song);
                         }
                     }
                     if (!isSOngAlreadyInAlbum) {
-                        Album album = new Album(song.getAlbum(),
+                        Album album = new Album(song.getAlbumName(),
                                 song.getArtist(),
-                                //getAlbumArt(song.getAlbum(), song.getArtist(), albumArtUri.toString()));
+                                //getAlbumArt(song.getAlbumName(), song.getArtist(), albumArtUri.toString()));
                                 //albumArtUri.toString());
                                 song.getCoverArt());
+                        song.setAlbum(album);
                         album.addSong(song);
                         albums.add(album);
                     }

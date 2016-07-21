@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <TextView
+        android:id="@+id/now_playing_preview_title"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left"
+        android:paddingBottom="1dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="10dp"
+        android:singleLine="true"
+        android:text="Infra Turbo Pigcart Racer"
+        android:textColor="@color/text_color"
+        android:textSize="22sp" />
+
+
+    <TextView
+        android:id="@+id/now_playing_preview_artist"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="left"
+        android:paddingBottom="8dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="1dp"
+        android:singleLine="true"
+        android:text="Deadmau5"
+        android:textColor="@color/detail_color"
+        android:textSize="14sp" />
+
+
+</LinearLayout>

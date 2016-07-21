@@ -13,6 +13,7 @@
             android:id="@+id/album_temp_art"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
+            android:transitionName="@string/fragment_album_art"
             android:scaleType="centerCrop"
             android:src="@drawable/sample_art" />
 
@@ -47,7 +48,7 @@
                     android:text="Lady Gaga"
                     android:textSize="12sp"
                     android:textColor="@color/detail_color"/>
-            </LinearLayout>
+            </LinearLayout><!--
 
             <ImageView
                 android:id="@+id/album_temp_more"
@@ -55,7 +56,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="0"
                 android:tint="@color/text_color"
-                android:src="@mipmap/ic_more"/>
+                android:src="@mipmap/ic_more"/>-->
 
         </LinearLayout>
     </LinearLayout>

@@ -2,11 +2,14 @@ package verendus.leshan.music.fragments;
 
 import android.content.Context;
 import android.database.DataSetObserver;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.TabLayout;
@@ -22,6 +25,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.transition.Transition;
+import android.transition.TransitionInflater;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -31,6 +36,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.kogitune.activity_transition.fragment.FragmentTransitionLauncher;
 import com.nostra13.universalimageloader.core.ImageLoader;
 
 import verendus.leshan.music.adapters.GenreListAdapter;
@@ -41,6 +47,7 @@ import verendus.leshan.music.R;
 import verendus.leshan.music.adapters.AlbumListAdapter;
 import verendus.leshan.music.adapters.ArtistListAdapter;
 import verendus.leshan.music.adapters.SongListAdapter;
+import verendus.leshan.music.views.SquaredImageView;
 
 
 /**
@@ -100,8 +107,17 @@ public class LibraryFragment extends Fragment {
         inflater.inflate(R.menu.menu_main, menu);
         MenuItem menuItem = menu.getItem(0);
         Drawable drawable = menuItem.getIcon();
-        drawable.setTint(Color.BLACK);
+        //drawable.setTint(mainActivity.getResources().getColor(R.color.main_text_color));
+        DrawableCompat.setTint(drawable, mainActivity.getResources().getColor(R.color.main_text_color));
         menuItem.setIcon(drawable);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+
+
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -156,9 +172,41 @@ public class LibraryFragment extends Fragment {
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
                 AlbumViewFragment fragment = AlbumViewFragment.newInstance(position);
-                fragmentTransaction.add(R.id.level1_fragment_container, fragment);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+
+                    // Inflate transitions to apply
+                    Transition changeTransform = TransitionInflater.from(appCompatActivity).inflateTransition(R.transition.change_image_transform);
+
+                    Transition explodeTransform = TransitionInflater.from(appCompatActivity).inflateTransition(android.R.transition.explode);
+
+                    // Setup enter transition on second fragment
+                    fragment.setSharedElementEnterTransition(changeTransform);
+                    fragment.setEnterTransition(explodeTransform);
+
+                    // Setup exit transition on first fragment
+                    LibraryFragment.this.setSharedElementReturnTransition(changeTransform);
+                    LibraryFragment.this.setExitTransition(explodeTransform);
+
+                    //fragmentTransaction.addSharedElement(holder.getIvAvatar(), getString(R.string.
+                    SquaredImageView imageView = (SquaredImageView) view.findViewById(R.id.album_temp_art);
+                    fragmentTransaction.addSharedElement(imageView, getString(R.string.fragment_album_art));
+
+                }
+
+                fragmentTransaction.replace(R.id.level1_fragment_container, fragment);
                 fragmentTransaction.addToBackStack(null);
                 fragmentTransaction.commit();
+
+                /*SquaredImageView imageView = (SquaredImageView) view.findViewById(R.id.album_temp_art);
+
+                AlbumViewFragment fragment = AlbumViewFragment.newInstance(position);
+                FragmentTransitionLauncher
+                        .with(view.getContext())
+                        .image(((BitmapDrawable)imageView.getDrawable()).getBitmap())
+                        .from(imageView).prepare(fragment);
+                getFragmentManager().beginTransaction().replace(R.id.level1_fragment_container, fragment).addToBackStack(null).commit();
+*/
 
             }
         };

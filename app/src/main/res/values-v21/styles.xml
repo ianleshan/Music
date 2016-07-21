@@ -7,6 +7,15 @@
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
 
+        <item name="android:colorAccent">@color/detail</item>
+        <item name="android:colorPrimary">@color/primary</item>
+
+    </style>
+
+    <style name="UnboundedRipple">
+
+        <item name="android:background">?android:selectableItemBackgroundBorderless</item>
+
     </style>
 
 </resources>

@@ -17,7 +17,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="0"
             android:background="@color/card_background"
-            android:visibility="visible">
+            android:visibility="gone">
 
             <!--<com.gc.materialdesign.views.ProgressBarDeterminate
                 android:id="@+id/preview_progress"

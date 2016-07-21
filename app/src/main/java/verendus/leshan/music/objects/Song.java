@@ -8,18 +8,19 @@ import verendus.leshan.music.R;
 public class Song {
 
     String title;
-    String album;
+    String albumName;
     String artist;
     long songId;
     String coverArt;
     int duration;
     int dateAdded;
+    Album album;
 
     int color;
 
-    public Song(String title, String album, String artist, long songId, String coverArt, int duration, int dateAdded) {
+    public Song(String title, String albumName, String artist, long songId, String coverArt, int duration, int dateAdded) {
         this.title = title;
-        this.album = album;
+        this.albumName = albumName;
         this.artist = artist;
         this.songId = songId;
         this.duration = duration;
@@ -39,8 +40,8 @@ public class Song {
         return title;
     }
 
-    public String getAlbum() {
-        return album;
+    public String getAlbumName() {
+        return albumName;
     }
 
     public String getArtist() {
@@ -65,5 +66,13 @@ public class Song {
 
     public int getDuration() {
         return duration;
+    }
+
+    public Album getAlbum() {
+        return album;
+    }
+
+    public void setAlbum(Album album) {
+        this.album = album;
     }
 }

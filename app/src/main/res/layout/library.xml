@@ -29,10 +29,10 @@
             android:layout_height="wrap_content"
             android:background="@color/primary"
             app:layout_scrollFlags="scroll|enterAlways|snap"
-            app:tabIndicatorColor="@color/main_text_color"
+            app:tabIndicatorColor="@color/detail"
             app:tabMode="scrollable"
-            app:tabSelectedTextColor="@color/main_text_color"
-            app:tabTextColor="@color/secondary_text_color"/>
+            app:tabSelectedTextColor="@color/detail"
+            app:tabTextColor="@color/main_text_color"/>
 
 
     </android.support.design.widget.AppBarLayout>

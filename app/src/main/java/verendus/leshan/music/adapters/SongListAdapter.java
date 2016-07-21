@@ -10,8 +10,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.balysv.materialripple.MaterialRippleLayout;
 import com.nostra13.universalimageloader.core.ImageLoader;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
@@ -28,6 +28,7 @@ public class SongListAdapter extends RecyclerView.Adapter<SongListAdapter.Recycl
     LayoutInflater inflater;
     Typeface font;
     ImageLoader imageLoader;
+    Context context;
     static OnItemClickListener itemClickListener;
 
 
@@ -56,6 +57,7 @@ public class SongListAdapter extends RecyclerView.Adapter<SongListAdapter.Recycl
         this.imageLoader = imageLoader;
         this.songs = songs;
         inflater = LayoutInflater.from(c);
+        context = c;
         font = Typeface.createFromAsset(c.getAssets(), "Roboto-Regular.ttf");
     }
 
@@ -65,15 +67,16 @@ public class SongListAdapter extends RecyclerView.Adapter<SongListAdapter.Recycl
         LinearLayout linearLayout = (LinearLayout) inflater.inflate
                 (R.layout.song_temp, parent, false);
 
-        MaterialRippleLayout layout = MaterialRippleLayout.on(linearLayout)
+        /*MaterialRippleLayout layout = MaterialRippleLayout.on(linearLayout)
                 .rippleAlpha(0.4f)
                 .rippleColor(0xFF585858)
                 .rippleOverlay(true)
                 .rippleDuration(500)
                 .rippleDelayClick(false)
-                .create();
+                .create();*/
 
-        RecyclerViewHolder recyclerViewHolder = new RecyclerViewHolder(layout);
+        RecyclerViewHolder recyclerViewHolder;
+        recyclerViewHolder = new RecyclerViewHolder(linearLayout);
 
 
         return recyclerViewHolder;
@@ -89,7 +92,12 @@ public class SongListAdapter extends RecyclerView.Adapter<SongListAdapter.Recycl
         holder.songView.setText(currSong.getTitle());
         holder.artistView.setText(currSong.getArtist());
         holder.albumArt.setImageBitmap(null);
-        imageLoader.displayImage(God.getAlbumFromName(currSong.getAlbum()).getCoverArt(), holder.albumArt);
+        /*if(currSong.getAlbum() != null){
+            imageLoader.displayImage(currSong.getAlbum().getCoverArt(), holder.albumArt);
+        }else {
+            imageLoader.displayImage(currSong.getCoverArt(), holder.albumArt);
+        }*/
+        Picasso.with(context).load(currSong.getCoverArt()).into(holder.albumArt);
         //imageLoader.displayImage(currSong.getCoverArt(), holder.albumArt);
         //set position as tag
         holder.itemView.setTag(position);

@@ -1,7 +1,9 @@
 package verendus.leshan.music.objects;
 
 import android.animation.ObjectAnimator;
+import android.animation.RectEvaluator;
 import android.content.Context;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -53,7 +55,7 @@ public class God implements Serializable{
     View repeatButton, previousButton, pauseButton, nextButton, shuffleButton;
     View timeControl;
 
-    ObjectAnimator nowPlayingAnimation;
+    ObjectAnimator nowPlayingAnimation, previewAnimation;
 
     int height;
 
@@ -70,8 +72,9 @@ public class God implements Serializable{
 
     public void setNowPlayingStatusBar(RelativeLayout nowPlayingStatusBar) {
         //nowPlayingStatusBar.setAlpha(0);
-        nowPlayingAnimation = ObjectAnimator.ofFloat(nowPlayingStatusBar, View.ALPHA, 0, 1);
-        nowPlayingAnimation.setCurrentFraction(0f);
+        nowPlayingAnimation = ObjectAnimator.ofFloat(nowPlayingStatusBar, View.SCALE_Y, 0, 1);
+        //nowPlayingAnimation.setCurrentFraction(0f);
+        nowPlayingAnimation.setCurrentPlayTime(0);
         this.nowPlayingStatusBar = nowPlayingStatusBar;
     }
 
@@ -97,6 +100,16 @@ public class God implements Serializable{
     }
 
     public void setPreview(RelativeLayout preview) {
+        Rect bounds = new Rect();
+        preview.getLocalVisibleRect(bounds);
+        Rect from = new Rect(bounds);
+        Rect to = new Rect(bounds);
+        to.bottom = 0;
+        previewAnimation = ObjectAnimator.ofObject(preview, "clipBounds", new verendus.leshan.music.views.RectEvaluator(), to, from);
+        //previewAnimation.setCurrentFraction(0f);
+        previewAnimation.start();
+        previewAnimation.setCurrentPlayTime(0L);
+
         this.preview = preview;
     }
 
@@ -109,23 +122,30 @@ public class God implements Serializable{
                 //Log.d("NOW PLAYING SLIDEOFFSET", slideOffset + "");
                 if(preview != null){
                     preview.setVisibility(View.VISIBLE);
-                    preview.setAlpha(1 - (slideOffset*5));
-                }
-
-                for(int i = 0; i < mainActivity.getPreviews().size(); i ++){
-                    mainActivity.getPreviews().get(i).setVisibility(View.VISIBLE);
+                    //preview.setAlpha(1 - (slideOffset*5));
+                    float fraction = 1 - (slideOffset*1.5f);
+                    //Log.d("FRACTION", fraction + "");
+                    if(fraction > .05f) {
+                        //previewAnimation.setCurrentFraction(fraction);
+                        previewAnimation.setCurrentPlayTime((long) (fraction * previewAnimation.getDuration()));
+                    }else {
+                        //previewAnimation.setCurrentFraction(.05f);
+                        previewAnimation.setCurrentPlayTime((long) (.05f * previewAnimation.getDuration()));
+                    }
                 }
 
                 isNowPlayingPanelOpen = false;
 
                 if(nowPlayingStatusBar != null) {
-                    float limit = .9f;
+                    float limit = .7f;
                     if (slideOffset < limit) {
-                        nowPlayingAnimation.setCurrentFraction(0f);
+                        //nowPlayingAnimation.setCurrentFraction(0f);
+                        nowPlayingAnimation.setCurrentPlayTime(0);
                     } else {
                         float y = slideOffset - limit;
                         float x = y/(1-limit);
-                        nowPlayingAnimation.setCurrentFraction(x);
+                        //nowPlayingAnimation.setCurrentFraction(x);
+                        nowPlayingAnimation.setCurrentPlayTime((long) (x * 300L));
                         //nowPlayingStatusBar.setAlpha(x);
                     }
 
@@ -138,29 +158,29 @@ public class God implements Serializable{
                         nowPlayingArtist.setScaleX(x);
                         nowPlayingArtist.setScaleY(x);*/
 
-                        repeatButton.setScaleX(factor(slideOffset ,.4f));
-                        repeatButton.setScaleY(factor(slideOffset ,.4f));
+                        repeatButton.setScaleX(factor(slideOffset ,.9f));
+                        repeatButton.setScaleY(factor(slideOffset ,.9f));
 
-                        previousButton.setScaleX(factor(slideOffset ,.5f));
-                        previousButton.setScaleY(factor(slideOffset ,.5f));
+                        previousButton.setScaleX(factor(slideOffset ,.8f));
+                        previousButton.setScaleY(factor(slideOffset ,.8f));
 
-                        pauseButton.setScaleX(factor(slideOffset ,.6f));
-                        pauseButton.setScaleY(factor(slideOffset ,.6f));
+                        pauseButton.setScaleX(factor(slideOffset ,.7f));
+                        pauseButton.setScaleY(factor(slideOffset ,.7f));
 
-                        nextButton.setScaleX(factor(slideOffset ,.7f));
-                        nextButton.setScaleY(factor(slideOffset ,.7f));
+                        nextButton.setScaleX(factor(slideOffset ,.8f));
+                        nextButton.setScaleY(factor(slideOffset ,.8f));
 
-                        shuffleButton.setScaleX(factor(slideOffset ,.8f));
-                        shuffleButton.setScaleY(factor(slideOffset ,.8f));
+                        shuffleButton.setScaleX(factor(slideOffset ,.9f));
+                        shuffleButton.setScaleY(factor(slideOffset ,.9f));
 
-                        currentTime.setScaleX(factor(slideOffset ,.75f));
-                        currentTime.setScaleY(factor(slideOffset ,.75f));
+                        currentTime.setScaleX(factor(slideOffset ,.99f));
+                        currentTime.setScaleY(factor(slideOffset ,.99f));
 
                         //slider.setScaleX(x);
                         timeControl.setScaleY(factor(slideOffset ,.75f));
 
-                        totalTime.setScaleX(factor(slideOffset ,.75f));
-                        totalTime.setScaleY(factor(slideOffset ,.75f));
+                        totalTime.setScaleX(factor(slideOffset ,.99f));
+                        totalTime.setScaleY(factor(slideOffset ,.99f));
                     }
 
 
@@ -178,10 +198,6 @@ public class God implements Serializable{
 
                 if(preview != null){
                     preview.setVisibility(View.INVISIBLE);
-                }
-
-                for(int i = 0; i < mainActivity.getPreviews().size(); i ++){
-                    mainActivity.getPreviews().get(i).setVisibility(View.INVISIBLE);
                 }
 
                 isNowPlayingPanelOpen = true;

@@ -6,11 +6,13 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.balysv.materialripple.MaterialRippleLayout;
 import com.nostra13.universalimageloader.core.ImageLoader;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
@@ -26,16 +28,19 @@ public class QueueListAdapter extends RecyclerView.Adapter<QueueListAdapter.Recy
     LayoutInflater inflater;
     Typeface font;
     ImageLoader imageLoader;
+    Context context;
     static OnItemClickListener itemClickListener;
 
 
     public static class RecyclerViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         TextView songTitle, artist;
+        ImageView albumArt;
 
         RecyclerViewHolder(View itemView) {
             super(itemView);
             songTitle = (TextView) itemView.findViewById(R.id.queue_list_temp_primary_text);
             artist = (TextView) itemView.findViewById(R.id.queue_list_temp_secondary_text);
+            albumArt = (ImageView) itemView.findViewById(R.id.queue_list_thumb);
             itemView.setOnClickListener(RecyclerViewHolder.this);
 
         }
@@ -52,7 +57,8 @@ public class QueueListAdapter extends RecyclerView.Adapter<QueueListAdapter.Recy
         this.imageLoader = imageLoader;
         this.songs = songs;
         inflater = LayoutInflater.from(c);
-        font = Typeface.createFromAsset(c.getAssets(), "font.ttf");
+        context = c;
+        font = Typeface.createFromAsset(c.getAssets(), "Roboto-Regular.ttf");
     }
 
     @Override
@@ -61,15 +67,7 @@ public class QueueListAdapter extends RecyclerView.Adapter<QueueListAdapter.Recy
         LinearLayout linearLayout = (LinearLayout) inflater.inflate
                 (R.layout.queue_list_temp, parent, false);
 
-        MaterialRippleLayout layout = MaterialRippleLayout.on(linearLayout)
-                .rippleAlpha(0.2f)
-                .rippleColor(0xFF585858)
-                .rippleOverlay(true)
-                .rippleDuration(200)
-                .rippleDelayClick(false)
-                .create();
-
-        RecyclerViewHolder recyclerViewHolder = new RecyclerViewHolder(layout);
+        RecyclerViewHolder recyclerViewHolder = new RecyclerViewHolder(linearLayout);
 
 
         return recyclerViewHolder;
@@ -82,6 +80,7 @@ public class QueueListAdapter extends RecyclerView.Adapter<QueueListAdapter.Recy
         Song currSong = songs.get(position);
         holder.songTitle.setText(currSong.getTitle());
         holder.artist.setText(currSong.getArtist());
+        Picasso.with(context).load(currSong.getCoverArt()).into(holder.albumArt);
         holder.itemView.setTag(position);
 
 
