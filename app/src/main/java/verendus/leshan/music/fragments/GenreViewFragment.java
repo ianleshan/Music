@@ -2,7 +2,6 @@ package verendus.leshan.music.fragments;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
@@ -17,9 +16,6 @@ import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import com.nostra13.universalimageloader.core.assist.FailReason;
-import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 
 import java.util.ArrayList;
 
@@ -49,9 +45,7 @@ public class GenreViewFragment extends Fragment {
 
     FloatingActionButton fab;
     RecyclerView recyclerView;
-    SquaredImageView imageView;
     Toolbar toolbar;
-    CollapsingToolbarLayout collapsingToolbarLayout;
 
     public GenreViewFragment() {
         // Required empty public constructor
@@ -72,6 +66,7 @@ public class GenreViewFragment extends Fragment {
         setRetainInstance(true);
         if (getArguments() != null) {
             mainActivity = (MainActivity) getActivity();
+            mainActivity.disableNavBar();
             genre = mainActivity.getGod().getGenres().get(getArguments().getInt("genre"));
         }
     }
@@ -80,88 +75,29 @@ public class GenreViewFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View rootView = inflater.inflate(R.layout.fragment_album_view, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_genre_view, container, false);
 
-        fab = (FloatingActionButton) rootView.findViewById(R.id.album_view_fab);
-        recyclerView = (RecyclerView) rootView.findViewById(R.id.album_view_song_list);
-        imageView = (SquaredImageView) rootView.findViewById(R.id.album_view_album_art);
-        toolbar = (Toolbar) rootView.findViewById(R.id.album_view_toolbar);
-        collapsingToolbarLayout = (CollapsingToolbarLayout) rootView.findViewById(R.id.album_view_collapsing_toolbar_layout);
+        fab = (FloatingActionButton) rootView.findViewById(R.id.genre_view_fab);
+        recyclerView = (RecyclerView) rootView.findViewById(R.id.genre_view_song_list);
+        toolbar = (Toolbar) rootView.findViewById(R.id.genre_view_toolbar);
 
         mainActivity.setSupportActionBar(toolbar);
-        toolbar.setTitle("");
+        toolbar.setTitle(genre.getName());
+
+        int primary = mainActivity.getOptions().getPrimaryColor();
+        int detail = mainActivity.getOptions().getDetailColor();
+        int text = mainActivity.getOptions().getTextColor();
+
+        toolbar.setBackgroundColor(primary);
+        toolbar.setTitleTextColor(text);
+        fab.setBackgroundTintList(ColorStateList.valueOf(detail));
+
         mainActivity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        mainActivity.getImageLoader().displayImage(genre.getSongs().get(0).getCoverArt(), imageView, new ImageLoadingListener() {
-            @Override
-            public void onLoadingStarted(String imageUri, View view) {
-
-            }
-
-            @Override
-            public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
-
-            }
-
-            @Override
-            public void onLoadingComplete(String imageUri, View view, final Bitmap loadedImage) {
-
-
-
-                Palette.PaletteAsyncListener paletteListener = new Palette.PaletteAsyncListener() {
-                    public void onGenerated(Palette palette) {
-
-
-
-                        if (palette.getVibrantSwatch() != null) {
-
-                            setColorsAccordingToSwatch(palette.getVibrantSwatch() , fab, collapsingToolbarLayout);
-
-                        } else if (palette.getMutedSwatch() != null) {
-                            setColorsAccordingToSwatch(palette.getMutedSwatch() , fab, collapsingToolbarLayout);
-
-
-                        } else if (palette.getLightVibrantSwatch() != null) {
-                            setColorsAccordingToSwatch(palette.getLightVibrantSwatch() , fab, collapsingToolbarLayout);
-
-
-                        } else if (palette.getDarkVibrantSwatch() != null) {
-                            setColorsAccordingToSwatch(palette.getDarkVibrantSwatch() , fab, collapsingToolbarLayout);
-
-
-                        } else if (palette.getLightMutedSwatch() != null) {
-                            setColorsAccordingToSwatch(palette.getLightMutedSwatch() , fab, collapsingToolbarLayout);
-
-                        } else if (palette.getDarkMutedSwatch() != null) {
-                            setColorsAccordingToSwatch(palette.getDarkMutedSwatch() , fab, collapsingToolbarLayout);
-
-                        }
-                    }
-                };
-
-                if (loadedImage != null && !loadedImage.isRecycled()) {
-                    Palette.from(loadedImage).generate(paletteListener);
-                }
-            }
-
-            @Override
-            public void onLoadingCancelled(String imageUri, View view) {
-
-            }
-        });
-
-        GenreViewSongListAdapter.OnItemClickListener songItemClickListener = new GenreViewSongListAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(View view, int position) {
-
-                int realPosition = position - 1;
-                mainActivity.setQueueAndPlaySong(genre.getSongs(), realPosition);
-
-            }
-        };
+        GenreViewSongListAdapter.OnItemClickListener songItemClickListener = (view, position) ->
+                mainActivity.setQueueAndPlaySong(genre.getSongs(), position);
 
         ArrayList<Object> objectArrayList = new ArrayList<>();
-        objectArrayList.add(genre.getName());
         objectArrayList.addAll(genre.getSongs());
 
         GridLayoutManager llm = new GridLayoutManager(inflater.getContext(), 1);
@@ -174,26 +110,13 @@ public class GenreViewFragment extends Fragment {
 
 
 
-        Typeface font = Typeface.createFromAsset(getActivity().getAssets(), "font.ttf");
-        Typeface titleFont = Typeface.createFromAsset(getActivity().getAssets(), "titleFont.ttf");
-
-        collapsingToolbarLayout.setCollapsedTitleTypeface(font);
-        collapsingToolbarLayout.setExpandedTitleTypeface(font);
+        Typeface font = Typeface.createFromAsset(getActivity().getAssets(), "Roboto-Regular.ttf");
+        Typeface titleFont = Typeface.createFromAsset(getActivity().getAssets(), "boldFont.ttf");
 
         God.overrideFonts(rootView, font);
         God.overrideFonts(toolbar, titleFont);
 
         return rootView;
-    }
-
-    private void setColorsAccordingToSwatch(Palette.Swatch swatch, FloatingActionButton fab, CollapsingToolbarLayout collapsingToolbarLayout) {
-
-        mainActivity.getGod().setLibraryStatusBarColor(swatch.getRgb());
-        fab.setBackgroundTintList(ColorStateList.valueOf(swatch.getRgb()));
-        collapsingToolbarLayout.setContentScrimColor(swatch.getRgb());
-        collapsingToolbarLayout.setCollapsedTitleTextColor(swatch.getTitleTextColor());
-        collapsingToolbarLayout.setStatusBarScrimColor(swatch.getRgb());
-
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -217,6 +140,7 @@ public class GenreViewFragment extends Fragment {
     @Override
     public void onDetach() {
         mainActivity.getGod().setLibraryStatusBarColor(Color.parseColor("#00000000"));
+        mainActivity.enableNavBar();
         super.onDetach();
         mListener = null;
     }

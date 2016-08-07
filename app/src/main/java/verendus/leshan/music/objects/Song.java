@@ -14,17 +14,19 @@ public class Song {
     String coverArt;
     int duration;
     int dateAdded;
+    int trackNumber;
     Album album;
 
     int color;
 
-    public Song(String title, String albumName, String artist, long songId, String coverArt, int duration, int dateAdded) {
-        this.title = title;
-        this.albumName = albumName;
-        this.artist = artist;
+    public Song(String title, String albumName, String artist, long songId, String coverArt, int duration, int dateAdded, int trackNumber) {
+        this.title = title == null? "<unknown>" : title;
+        this.albumName = albumName == null? "<unknown>" : albumName;
+        this.artist = artist == null? "<unknown>" : artist;
         this.songId = songId;
         this.duration = duration;
         this.dateAdded = dateAdded;
+        this.trackNumber = trackNumber;
 
         if(coverArt != null) {
             this.coverArt = coverArt;
@@ -70,6 +72,10 @@ public class Song {
 
     public Album getAlbum() {
         return album;
+    }
+
+    public int getTrackNumber() {
+        return trackNumber;
     }
 
     public void setAlbum(Album album) {

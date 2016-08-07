@@ -1,12 +1,8 @@
 package verendus.leshan.music.adapters;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.graphics.Typeface;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
+import android.support.v4.view.ViewCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.CardView;
@@ -17,16 +13,12 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.assist.FailReason;
-import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 
 import java.util.ArrayList;
 
-import verendus.leshan.music.objects.Album;
 import verendus.leshan.music.R;
+import verendus.leshan.music.objects.Album;
 import verendus.leshan.music.views.SquaredImageView;
 
 /**
@@ -38,7 +30,6 @@ public class AlbumListAdapter extends RecyclerView.Adapter<AlbumListAdapter.Albu
     static Album album;
     LayoutInflater inflater;
     Typeface font;
-    ImageLoader imageLoader;
     static OnItemClickListener itemClickListener;
     ImageView iv;
     static AlbumViewHolder albumViewHolder;
@@ -61,20 +52,23 @@ public class AlbumListAdapter extends RecyclerView.Adapter<AlbumListAdapter.Albu
 
         }
 
+        public SquaredImageView getAlbumCover() {
+            return albumCover;
+        }
+
         @Override
         public void onClick(View v) {
             if (itemClickListener != null) {
-                itemClickListener.onItemClick(v, getPosition());
+                itemClickListener.onItemClick(albumCover, getPosition());
             }
         }
     }
 
-    public AlbumListAdapter(Context c, ArrayList<Album> albums, ImageLoader imageLoader) {
-        this.imageLoader = imageLoader;
+    public AlbumListAdapter(Context c, ArrayList<Album> albums) {
         this.albums = albums;
         this.appCompatActivity = (AppCompatActivity) c;
         inflater = LayoutInflater.from(c);
-        font = Typeface.createFromAsset(c.getAssets(), "Roboto-Regular.ttf");
+        font = Typeface.createFromAsset(c.getAssets(), "boldFont.ttf");
     }
 
     @Override
@@ -107,7 +101,7 @@ public class AlbumListAdapter extends RecyclerView.Adapter<AlbumListAdapter.Albu
             album.setCoverArt("drawable://" + R.drawable.sample_art);
         //Log.d("TAAAAAAAAAG!!", album.getCoverArt());
 
-        Target target = new Target() {
+        /*Target target = new Target() {
             @Override
             public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
                 holder.albumCover.setImageBitmap(bitmap);
@@ -157,11 +151,15 @@ public class AlbumListAdapter extends RecyclerView.Adapter<AlbumListAdapter.Albu
             public void onPrepareLoad(Drawable placeHolderDrawable) {
 
             }
-        };
+        };*/
+
+        ViewCompat.setTransitionName(holder.albumCover, String.valueOf(position) + "_image");
+
 
         Picasso.with(appCompatActivity)
                 .load(album.getCoverArt())
-                .into(target);
+                .error(R.drawable.sample_art)
+                .into(holder.albumCover);
 
         holder.albumCover.setMinimumHeight(holder.albumCover.getMeasuredWidth());
     }
@@ -173,6 +171,8 @@ public class AlbumListAdapter extends RecyclerView.Adapter<AlbumListAdapter.Albu
         holder.artistName.setTextColor(swatch.getBodyTextColor());
 
     }
+
+
 
     @Override
     public int getItemCount() {

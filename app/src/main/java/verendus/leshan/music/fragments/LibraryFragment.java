@@ -1,5 +1,6 @@
 package verendus.leshan.music.fragments;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.database.DataSetObserver;
 import android.graphics.BitmapFactory;
@@ -17,6 +18,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.graphics.ColorUtils;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MenuItemCompat;
@@ -25,8 +27,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.transition.ChangeBounds;
+import android.transition.ChangeImageTransform;
+import android.transition.ChangeTransform;
+import android.transition.Explode;
+import android.transition.Fade;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
+import android.transition.TransitionSet;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -36,18 +45,22 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.kogitune.activity_transition.fragment.FragmentTransitionLauncher;
-import com.nostra13.universalimageloader.core.ImageLoader;
+
+import com.makeramen.roundedimageview.RoundedImageView;
 
 import verendus.leshan.music.adapters.GenreListAdapter;
 import verendus.leshan.music.adapters.PlaylistListAdapter;
+import verendus.leshan.music.animation.TransitionHelper;
 import verendus.leshan.music.objects.God;
 import verendus.leshan.music.MainActivity;
 import verendus.leshan.music.R;
 import verendus.leshan.music.adapters.AlbumListAdapter;
 import verendus.leshan.music.adapters.ArtistListAdapter;
 import verendus.leshan.music.adapters.SongListAdapter;
+import verendus.leshan.music.test.GridFragment;
 import verendus.leshan.music.views.SquaredImageView;
+
+import static android.transition.TransitionSet.ORDERING_TOGETHER;
 
 
 /**
@@ -69,19 +82,18 @@ public class LibraryFragment extends Fragment {
     private ViewPager viewPager;
     private TabLayout tabLayout;
     private Typeface font, titleFont;
-    private static ImageLoader imageLoader;
     static SongListAdapter.OnItemClickListener songItemClickListener;
     static AlbumListAdapter.OnItemClickListener albumItemClickListener;
     static GenreListAdapter.OnItemClickListener genreItemClickListener;
+    static ArtistListAdapter.OnItemClickListener artistOnItemClickListener;
 
     private static final int NUM_OF_TABS = 5;
     private static final int SONGS = 0;
     private static final int ALBUMS = 1;
     private static final int ARTISTS = 2;
-    private static final int PLAYLISTS = 3;
-    private static final int GENRES = 4;
-    private static final int FOLDERS = 5;
-    private static final CharSequence[] TITLES = new CharSequence[]{"Songs", "Albums", "Artists", "Playlists", "Genres",  "Folders"};
+    private static final int PLAYLISTS = 4;
+    private static final int GENRES = 3;
+    private static final CharSequence[] TITLES = new CharSequence[]{"Songs", "Albums", "Artists", "Genres", "Playlists"};
 
 
     public LibraryFragment() {
@@ -97,24 +109,27 @@ public class LibraryFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mainActivity = ((MainActivity)getActivity());
+        mainActivity = ((MainActivity) getActivity());
         god = mainActivity.getGod();
         mainActivity.setVolumeControlStream(AudioManager.STREAM_MUSIC);
     }
 
+    MenuItem searchMenuItem;
+
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_main, menu);
-        MenuItem menuItem = menu.getItem(0);
-        Drawable drawable = menuItem.getIcon();
-        //drawable.setTint(mainActivity.getResources().getColor(R.color.main_text_color));
+        searchMenuItem = menu.getItem(0);
+        Drawable drawable = searchMenuItem.getIcon();
         DrawableCompat.setTint(drawable, mainActivity.getResources().getColor(R.color.main_text_color));
-        menuItem.setIcon(drawable);
+        searchMenuItem.setIcon(drawable);
+
+        updatePrimaryColor();
+        updateDetailColor();
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
 
 
         return super.onOptionsItemSelected(item);
@@ -123,7 +138,7 @@ public class LibraryFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        mainActivity = ((MainActivity)getActivity());
+        mainActivity = ((MainActivity) getActivity());
         god = mainActivity.getGod();
     }
 
@@ -134,24 +149,7 @@ public class LibraryFragment extends Fragment {
 
         setHasOptionsMenu(true);
         View rootView = inflater.inflate(R.layout.fragment_library, container, false);
-        final AppCompatActivity appCompatActivity = ((AppCompatActivity)getActivity());
-
-        /**DisplayImageOptions defaultOptions = new DisplayImageOptions.Builder()
-                .cacheOnDisc(true)
-                .showImageForEmptyUri(R.drawable.sample_art)
-                .showImageOnFail(R.drawable.sample_art)
-                //.showImageOnLoading(R.drawable.sample_art)
-                .cacheOnDisk(true)
-                .displayer(new FadeInBitmapDisplayer(500))
-                .build();
-
-        ImageLoaderConfiguration configuration = new ImageLoaderConfiguration.Builder(getContext())
-                .defaultDisplayImageOptions(defaultOptions).
-                        denyCacheImageMultipleSizesInMemory()
-                .build();
-
-        ImageLoader.getInstance().init(configuration);**/
-        imageLoader = ImageLoader.getInstance();
+        final AppCompatActivity appCompatActivity = ((AppCompatActivity) getActivity());
 
 
         songItemClickListener = new SongListAdapter.OnItemClickListener() {
@@ -166,14 +164,35 @@ public class LibraryFragment extends Fragment {
 
         albumItemClickListener = new AlbumListAdapter.OnItemClickListener() {
             @Override
+            public void onItemClick(final View viewHolder, int position) {
+
+                //android.support.v4.app.FragmentManager fragmentManager = appCompatActivity.getSupportFragmentManager();
+                //FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+                AlbumViewFragment fragment = AlbumViewFragment.newInstance(position);
+
+                TransitionHelper.setTransition(1, viewHolder);
+                appCompatActivity.getSupportFragmentManager()
+                        .beginTransaction()
+                        .addSharedElement(viewHolder, "bar")
+                        .replace(R.id.level1_fragment_container, fragment, "albumFragment")
+                        .addToBackStack(null)
+                        .commit();
+
+            }
+        };
+
+
+        artistOnItemClickListener = new ArtistListAdapter.OnItemClickListener() {
+            @Override
             public void onItemClick(final View view, int position) {
 
                 android.support.v4.app.FragmentManager fragmentManager = appCompatActivity.getSupportFragmentManager();
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-                AlbumViewFragment fragment = AlbumViewFragment.newInstance(position);
+                ArtistViewFragment fragment = ArtistViewFragment.newInstance(position);
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 
                     // Inflate transitions to apply
                     Transition changeTransform = TransitionInflater.from(appCompatActivity).inflateTransition(R.transition.change_image_transform);
@@ -189,12 +208,15 @@ public class LibraryFragment extends Fragment {
                     LibraryFragment.this.setExitTransition(explodeTransform);
 
                     //fragmentTransaction.addSharedElement(holder.getIvAvatar(), getString(R.string.
-                    SquaredImageView imageView = (SquaredImageView) view.findViewById(R.id.album_temp_art);
-                    fragmentTransaction.addSharedElement(imageView, getString(R.string.fragment_album_art));
+                    //SquaredImageView imageView = (SquaredImageView) view.findViewById(R.id.artist_temp_art);
+                    //fragmentTransaction.addSharedElement(imageView, getString(R.string.fragment_album_art));
 
-                }
+                }*/
 
-                fragmentTransaction.replace(R.id.level1_fragment_container, fragment);
+
+                RoundedImageView imageView = (RoundedImageView) view.findViewById(R.id.artist_temp_art);
+                TransitionHelper.setTransition(2, imageView);
+                fragmentTransaction.replace(R.id.level1_fragment_container, fragment, "artistFragment");
                 fragmentTransaction.addToBackStack(null);
                 fragmentTransaction.commit();
 
@@ -233,7 +255,7 @@ public class LibraryFragment extends Fragment {
         toolbar = (Toolbar) rootView.findViewById(R.id.toolbar);
         appCompatActivity.setSupportActionBar(toolbar);
 
-        if(toolbar != null){
+        if (toolbar != null) {
             appCompatActivity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             Drawable drawable = getResources().getDrawable(R.mipmap.ic_drawer);
             DrawableCompat.setTint(drawable, getResources().getColor(R.color.main_text_color));
@@ -249,12 +271,39 @@ public class LibraryFragment extends Fragment {
         tabLayout = (TabLayout) rootView.findViewById(R.id.tab_layout);
         viewPager = (ViewPager) rootView.findViewById(R.id.viewpager);
         ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter(getActivity().getSupportFragmentManager());
-        if(viewPager != null){viewPager.setAdapter(viewPagerAdapter);
-        tabLayout.setupWithViewPager(viewPager);}
+        if (viewPager != null) {
+            viewPager.setAdapter(viewPagerAdapter);
+            tabLayout.setupWithViewPager(viewPager);
+        }
         //God.overrideFonts(appBar, titleFont);
         God.overrideFonts(tabLayout, titleFont);
         God.overrideFonts(toolbar, font);
+
+
         return rootView;
+    }
+
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    public class DetailsTransition extends TransitionSet {
+        public DetailsTransition() {
+            init();
+        }
+
+        /**
+         * This constructor allows us to use this transition in XML
+         */
+        public DetailsTransition(Context context, AttributeSet attrs) {
+            super(context, attrs);
+            init();
+        }
+
+        private void init() {
+            setOrdering(ORDERING_TOGETHER);
+            addTransition(new ChangeBounds()).
+                    addTransition(new ChangeTransform()).
+                    addTransition(new ChangeImageTransform());
+        }
     }
 
     class ViewPagerAdapter extends FragmentStatePagerAdapter {
@@ -292,10 +341,9 @@ public class LibraryFragment extends Fragment {
         }
     }
 
-    public static class FragmentTab extends Fragment{
+    public static class FragmentTab extends Fragment {
 
         int type;
-
 
 
         @Override
@@ -304,43 +352,43 @@ public class LibraryFragment extends Fragment {
             Log.d("TYPE", "" + type);
             View rootView = inflater.inflate(R.layout.fragment, container, false);
             RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.fragment_list);
-            if(type==SONGS) {
+            if (type == SONGS) {
                 GridLayoutManager llm = new GridLayoutManager(inflater.getContext(), 1);
                 recyclerView.setLayoutManager(llm);
                 recyclerView.setHasFixedSize(true);
-                SongListAdapter recyclerViewAdapter = new SongListAdapter(inflater.getContext(), god.getSongs(), imageLoader);
+                SongListAdapter recyclerViewAdapter = new SongListAdapter(inflater.getContext(), god.getSongs());
                 recyclerViewAdapter.setOnItemClickListener(songItemClickListener);
                 recyclerView.setAdapter(recyclerViewAdapter);
 
-            }else if(type == ALBUMS){
+            } else if (type == ALBUMS) {
                 //StaggeredGridLayoutManager llm = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
                 GridLayoutManager llm = new GridLayoutManager(inflater.getContext(), 2);
                 recyclerView.setLayoutManager(llm);
                 recyclerView.setHasFixedSize(true);
-                AlbumListAdapter recyclerViewAdapter = new AlbumListAdapter(inflater.getContext(), god.getAlbums(), imageLoader);
+                AlbumListAdapter recyclerViewAdapter = new AlbumListAdapter(inflater.getContext(), god.getAlbums());
                 recyclerViewAdapter.setOnItemClickListener(albumItemClickListener);
                 recyclerView.setAdapter(recyclerViewAdapter);
 
-            }else if(type == ARTISTS){
+            } else if (type == ARTISTS) {
                 //StaggeredGridLayoutManager llm = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
-                GridLayoutManager llm = new GridLayoutManager(inflater.getContext(), 2);
-                recyclerView.setLayoutManager(llm);
-                recyclerView.setHasFixedSize(true);
-                ArtistListAdapter recyclerViewAdapter = new ArtistListAdapter(inflater.getContext(), god.getArtists(), imageLoader);
-                //recyclerViewAdapter.setOnItemClickListener(songItemClickListener);
-                recyclerView.setAdapter(recyclerViewAdapter);
-            }else if(type == GENRES){
                 GridLayoutManager llm = new GridLayoutManager(inflater.getContext(), 1);
                 recyclerView.setLayoutManager(llm);
                 recyclerView.setHasFixedSize(true);
-                GenreListAdapter recyclerViewAdapter = new GenreListAdapter(inflater.getContext(), god.getGenres(), imageLoader);
+                ArtistListAdapter recyclerViewAdapter = new ArtistListAdapter(inflater.getContext(), god.getArtists());
+                recyclerViewAdapter.setOnItemClickListener(artistOnItemClickListener);
+                recyclerView.setAdapter(recyclerViewAdapter);
+            } else if (type == GENRES) {
+                GridLayoutManager llm = new GridLayoutManager(inflater.getContext(), 1);
+                recyclerView.setLayoutManager(llm);
+                recyclerView.setHasFixedSize(true);
+                GenreListAdapter recyclerViewAdapter = new GenreListAdapter(inflater.getContext(), god.getGenres());
                 recyclerViewAdapter.setOnItemClickListener(genreItemClickListener);
                 recyclerView.setAdapter(recyclerViewAdapter);
-            }else if(type == PLAYLISTS){
+            } else if (type == PLAYLISTS) {
                 GridLayoutManager llm = new GridLayoutManager(inflater.getContext(), 1);
                 recyclerView.setLayoutManager(llm);
                 recyclerView.setHasFixedSize(true);
-                PlaylistListAdapter recyclerViewAdapter = new PlaylistListAdapter(inflater.getContext(), god.getPlaylists(), imageLoader);
+                PlaylistListAdapter recyclerViewAdapter = new PlaylistListAdapter(inflater.getContext(), god.getPlaylists());
                 //recyclerViewAdapter.setOnItemClickListener(songItemClickListener);
                 recyclerView.setAdapter(recyclerViewAdapter);
             }
@@ -372,6 +420,34 @@ public class LibraryFragment extends Fragment {
         super.onDetach();
         mListener = null;
     }
+
+    public void updatePrimaryColor() {
+        int primaryColor = mainActivity.getOptions().getPrimaryColor();
+        int textColor = mainActivity.getOptions().getTextColor();
+
+        appBar.setBackgroundColor(primaryColor);
+        toolbar.setTitleTextColor(textColor);
+        mainActivity.getGod().setLibraryStatusBarColor(primaryColor);
+        tabLayout.setTabTextColors(textColor, mainActivity.getOptions().getDetailColor());
+
+        Drawable menuDrawable = getResources().getDrawable(R.mipmap.ic_drawer);
+        DrawableCompat.setTint(menuDrawable, textColor);
+        toolbar.setNavigationIcon(menuDrawable);
+        toolbar.setNavigationOnClickListener(v -> god.getDrawerLayout().openDrawer(GravityCompat.START));
+
+        Drawable searchDrawable = searchMenuItem.getIcon();
+        DrawableCompat.setTint(searchDrawable, textColor);
+        searchMenuItem.setIcon(searchDrawable);
+    }
+
+    public void updateDetailColor() {
+        int detailColor = mainActivity.getOptions().getDetailColor();
+        int textColor = mainActivity.getOptions().getTextColor();
+
+        tabLayout.setTabTextColors(textColor, detailColor);
+        tabLayout.setSelectedTabIndicatorColor(detailColor);
+    }
+
 
     /**
      * This interface must be implemented by activities that contain this

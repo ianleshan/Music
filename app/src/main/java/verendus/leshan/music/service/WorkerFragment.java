@@ -1,16 +1,20 @@
 package verendus.leshan.music.service;
 
 
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import org.w3c.dom.Document;
@@ -57,6 +61,8 @@ public class WorkerFragment extends Fragment {
     public static int MEGA = 4;
     public static final String IMAGE_QUALITY = imageQualities[EXTRA_LARGE];
 
+    private final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 2309;
+
 
     public WorkerFragment() {
 
@@ -69,7 +75,39 @@ public class WorkerFragment extends Fragment {
         setRetainInstance(true);
         mainActivity = (MainActivity)getActivity();
         workerCallbacks = mainActivity;
-        loadData();
+
+        int permissionCheck = ContextCompat.checkSelfPermission(getContext(),
+                Manifest.permission.READ_EXTERNAL_STORAGE);
+
+        if(permissionCheck == PackageManager.PERMISSION_GRANTED){
+            loadData();
+        }else {
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
+        }
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    loadData();
+
+                } else {
+
+                    mainActivity.finish();
+
+                }
+                return;
+            }
+        }
     }
 
 
@@ -197,6 +235,8 @@ public class WorkerFragment extends Fragment {
                     (MediaStore.Audio.Media.DURATION);
             int dateAddedID = musicCursor.getColumnIndex
                     (MediaStore.Audio.Media.DATE_ADDED);
+            int dataID = musicCursor.getColumnIndex
+                    (MediaStore.Audio.Media.DATA);
             //add queue to list
 
 
@@ -206,7 +246,7 @@ public class WorkerFragment extends Fragment {
                 String thisArtist = musicCursor.getString(artistColumn);
                 String thisAlbum = musicCursor.getString(albumColumn);
                 int thisTrack = musicCursor.getInt(trackColumn);
-                Log.d("TAG", thisTrack+"  ----  " + thisAlbum);
+                //Log.d("TAG", thisTrack+"  ----  " + thisAlbum);
                 int thisDuration = musicCursor.getInt(durationColumn);
                 int thisDateAdded = musicCursor.getInt(dateAddedID);
                 boolean isAlarm = (musicCursor.getShort(isAlarmID) != 0);
@@ -222,7 +262,7 @@ public class WorkerFragment extends Fragment {
                 Uri albumArtUri = ContentUris.withAppendedId(sArtworkUri, albumId);
 
 
-                //Log.d("ALBUM ART" ,albumArtUri.toString());
+                Log.d(thisAlbum + "DATA is " , musicCursor.getString(dataID));
                 /**
                  Bitmap bitmap = null;
                  int width = getWindowManager().getDefaultDisplay().getWidth();
@@ -250,9 +290,11 @@ public class WorkerFragment extends Fragment {
                             thisAlbum,
                             thisArtist,
                             thisId,
-                            getAlbumArt(thisAlbum, thisArtist, albumArtUri.toString()),
+                            //getAlbumArt(thisAlbum, thisArtist, albumArtUri.toString()),
+                            albumArtUri.toString(),
                             thisDuration,
-                            thisDateAdded);
+                            thisDateAdded,
+                            thisTrack);
                     songs.add(song);
                     boolean isSOngAlreadyInAlbum = false;
                     for (Album album : albums) {
@@ -284,8 +326,8 @@ public class WorkerFragment extends Fragment {
                     }
                     if (!isAlbumAlreadyInArtist) {
                         artists.add(new Artist(album.getArtist(),
-                                getArtistArt(album.getArtist())));
-                        //albumArtUri.toString()));
+                                //getArtistArt(album.getArtist())));
+                        album.getCoverArt()));
 
                     }
                 }
@@ -297,6 +339,7 @@ public class WorkerFragment extends Fragment {
     }
     public void loadGenres() {
 
+        genres = new ArrayList<>();
         ContentResolver musicResolver = mainActivity.getContentResolver();
         Uri genreUri = MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI;
         Cursor genreCursor = musicResolver.query(genreUri, null, null, null, null);
@@ -348,6 +391,7 @@ public class WorkerFragment extends Fragment {
     }
     public void loadPlaylists() {
 
+        playlists = new ArrayList<>();
         ContentResolver musicResolver = mainActivity.getContentResolver();
         Uri musicUri = MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI;
         Cursor playlistCursor = musicResolver.query(musicUri, null, null, null, null);

@@ -2,6 +2,7 @@ package verendus.leshan.music.objects;
 
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import verendus.leshan.music.R;
 
@@ -10,8 +11,8 @@ import verendus.leshan.music.R;
  */
 public class Artist {
 
-    ArrayList<Album> albums = new ArrayList<>();
-    ArrayList<Song> songs = new ArrayList<>();
+    HashSet<Album> albums = new HashSet<>();
+    HashSet<Song> songs = new HashSet<>();
 
     String name;
     String coverArt;
@@ -31,6 +32,7 @@ public class Artist {
 
     public void addAlbum(Album album) {
         albums.add(album);
+        songs.addAll(album.getSongs());
     }
 
     public String getCoverArt() {
@@ -39,5 +41,13 @@ public class Artist {
 
     public void setCoverArt(String coverArt) {
         this.coverArt = coverArt;
+    }
+
+    public HashSet<Album> getAlbums() {
+        return albums;
+    }
+
+    public HashSet<Song> getSongs() {
+        return songs;
     }
 }

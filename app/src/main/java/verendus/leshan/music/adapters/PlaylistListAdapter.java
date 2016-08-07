@@ -9,9 +9,6 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.balysv.materialripple.MaterialRippleLayout;
-import com.nostra13.universalimageloader.core.ImageLoader;
-
 import java.util.ArrayList;
 
 import verendus.leshan.music.R;
@@ -25,7 +22,6 @@ public class PlaylistListAdapter extends RecyclerView.Adapter<PlaylistListAdapte
     ArrayList<Playlist> playlists;
     LayoutInflater inflater;
     Typeface font;
-    ImageLoader imageLoader;
     static OnItemClickListener itemClickListener;
 
 
@@ -48,8 +44,7 @@ public class PlaylistListAdapter extends RecyclerView.Adapter<PlaylistListAdapte
         }
     }
 
-    public PlaylistListAdapter(Context c, ArrayList<Playlist> playlists, ImageLoader imageLoader) {
-        this.imageLoader = imageLoader;
+    public PlaylistListAdapter(Context c, ArrayList<Playlist> playlists) {
         this.playlists = playlists;
         inflater = LayoutInflater.from(c);
         font = Typeface.createFromAsset(c.getAssets(), "boldFont.ttf");
@@ -61,15 +56,7 @@ public class PlaylistListAdapter extends RecyclerView.Adapter<PlaylistListAdapte
         LinearLayout linearLayout = (LinearLayout) inflater.inflate
                 (R.layout.playlist_list_temp, parent, false);
 
-        MaterialRippleLayout layout = MaterialRippleLayout.on(linearLayout)
-                .rippleAlpha(0.2f)
-                .rippleColor(0xFF585858)
-                .rippleOverlay(true)
-                .rippleDuration(200)
-                .rippleDelayClick(false)
-                .create();
-
-        RecyclerViewHolder recyclerViewHolder = new RecyclerViewHolder(layout);
+        RecyclerViewHolder recyclerViewHolder = new RecyclerViewHolder(linearLayout);
 
 
         return recyclerViewHolder;

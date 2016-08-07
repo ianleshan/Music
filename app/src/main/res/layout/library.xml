@@ -18,7 +18,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:layout_scrollFlags="scroll|enterAlways|snap"
+            app:layout_scrollFlags="scroll|enterAlways"
             app:titleTextColor="@color/main_text_color"
             app:subtitleTextColor="@color/main_text_color"/>
 
@@ -27,8 +27,7 @@
             android:id="@+id/tab_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/primary"
-            app:layout_scrollFlags="scroll|enterAlways|snap"
+            app:layout_scrollFlags="scroll|enterAlways"
             app:tabIndicatorColor="@color/detail"
             app:tabMode="scrollable"
             app:tabSelectedTextColor="@color/detail"

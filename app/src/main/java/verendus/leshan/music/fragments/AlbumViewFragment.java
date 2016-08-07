@@ -1,42 +1,46 @@
 package verendus.leshan.music.fragments;
 
 import android.animation.Animator;
+import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
+import android.animation.RectEvaluator;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
-import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
-import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.Window;
 import android.view.animation.Interpolator;
+import android.widget.Toast;
 
-import com.nostra13.universalimageloader.core.assist.FailReason;
-import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import java.util.ArrayList;
 
-import verendus.leshan.music.objects.Album;
-import verendus.leshan.music.objects.God;
 import verendus.leshan.music.MainActivity;
 import verendus.leshan.music.R;
-import verendus.leshan.music.views.SquaredImageView;
 import verendus.leshan.music.adapters.AlbumViewSongListAdapter;
+import verendus.leshan.music.animation.TransitionHelper;
+import verendus.leshan.music.objects.Album;
+import verendus.leshan.music.objects.God;
+import verendus.leshan.music.views.SquaredImageView;
 
 
 /**
@@ -62,6 +66,8 @@ public class AlbumViewFragment extends Fragment {
     CollapsingToolbarLayout collapsingToolbarLayout;
     View rootView;
 
+    ObjectAnimator moveX, moveY, scaleX, scaleY, revealAnimation;
+
     public AlbumViewFragment() {
         // Required empty public constructor
     }
@@ -81,8 +87,75 @@ public class AlbumViewFragment extends Fragment {
         setRetainInstance(true);
         if (getArguments() != null) {
             mainActivity = (MainActivity) getActivity();
+            mainActivity.disableNavBar();
             album = mainActivity.getGod().getAlbums().get(getArguments().getInt("album"));
         }
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        TransitionHelper.Transition albumTransition = TransitionHelper.getTransition(1);
+
+        Rect rectangle = new Rect();
+        Window window = getActivity().getWindow();
+        window.getDecorView().getWindowVisibleDisplayFrame(rectangle);
+        int statusBarHeight = rectangle.top;
+        int contentViewTop =
+                window.findViewById(Window.ID_ANDROID_CONTENT).getTop();
+        int titleBarHeight= contentViewTop - statusBarHeight;
+
+        float width = (float)getActivity().getWindowManager().getDefaultDisplay().getWidth();
+        float height = (float)getActivity().getWindowManager().getDefaultDisplay().getHeight();
+
+        /*Rect bounds = new Rect();
+        view.getLocalVisibleRect(bounds);
+        Rect from = new Rect(bounds);
+        Rect to = new Rect(bounds);
+        from.bottom = 0;//albumTransition.getHeight();
+        from.left = 0;*/
+
+        Rect to = new Rect(0, 0, (int)width, (int)height);
+        Rect from = new Rect(to);
+        to.bottom = albumTransition.getHeight() * 2;
+
+        Interpolator interpolator = new FastOutSlowInInterpolator();
+
+        moveX = ObjectAnimator.ofFloat(view, View.TRANSLATION_X, albumTransition.getX(), 0);
+        moveY = ObjectAnimator.ofFloat(view, View.TRANSLATION_Y, albumTransition.getY() - statusBarHeight, 0);
+        scaleX = ObjectAnimator.ofFloat(view, View.SCALE_X, (float)albumTransition.getWidth()/width, 1);
+        scaleY = ObjectAnimator.ofFloat(view, View.SCALE_Y, (((float)albumTransition.getWidth()*height) / width) / height, 1);
+
+        revealAnimation = ObjectAnimator.ofObject(view, "clipBounds", new verendus.leshan.music.views.RectEvaluator(), to, from);
+
+
+        //String toast = " X : " + albumTransition.getX() +" Y : " + albumTransition.getY() +" W : " + albumTransition.getWidth() +" H : " + albumTransition.getHeight();
+        //Toast.makeText(getContext(), toast, Toast.LENGTH_SHORT).show();
+
+        int duration = 350;
+
+        view.setPivotX(0);
+        //view.setPivotY(0);
+
+        moveX.setInterpolator(interpolator);
+        moveY.setInterpolator(interpolator);
+        scaleX.setInterpolator(interpolator);
+        scaleY.setInterpolator(interpolator);
+        revealAnimation.setInterpolator(interpolator);
+
+        moveX.setDuration(duration);
+        moveY.setDuration(duration);
+        scaleX.setDuration(duration);
+        scaleY.setDuration(duration);
+        revealAnimation.setDuration((long) (duration * 1.5));
+
+
+        moveX.start();
+        moveY.start();
+        scaleX.start();
+        scaleY.start();
+        revealAnimation.start();
     }
 
     @Override
@@ -139,51 +212,36 @@ public class AlbumViewFragment extends Fragment {
         God.overrideFonts(rootView, font);
         God.overrideFonts(toolbar, titleFont);
 
-
-        mainActivity.getImageLoader().displayImage(album.getCoverArt(), imageView, new ImageLoadingListener() {
+        Target target = new Target() {
             @Override
-            public void onLoadingStarted(String imageUri, View view) {
+            public void onBitmapLoaded(Bitmap loadedImage, Picasso.LoadedFrom from) {
 
-            }
-
-            @Override
-            public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
-
-            }
-
-            @Override
-            public void onLoadingComplete(String imageUri, View view, final Bitmap loadedImage) {
+                Palette.PaletteAsyncListener paletteListener = palette -> {
 
 
 
-                Palette.PaletteAsyncListener paletteListener = new Palette.PaletteAsyncListener() {
-                    public void onGenerated(Palette palette) {
+                    if (palette.getVibrantSwatch() != null) {
+
+                        setColorsAccordingToSwatch(palette.getVibrantSwatch() , fab, collapsingToolbarLayout);
+
+                    } else if (palette.getMutedSwatch() != null) {
+                        setColorsAccordingToSwatch(palette.getMutedSwatch() , fab, collapsingToolbarLayout);
 
 
-
-                        if (palette.getVibrantSwatch() != null) {
-
-                            setColorsAccordingToSwatch(palette.getVibrantSwatch() , fab, collapsingToolbarLayout);
-
-                        } else if (palette.getMutedSwatch() != null) {
-                            setColorsAccordingToSwatch(palette.getMutedSwatch() , fab, collapsingToolbarLayout);
+                    } else if (palette.getLightVibrantSwatch() != null) {
+                        setColorsAccordingToSwatch(palette.getLightVibrantSwatch() , fab, collapsingToolbarLayout);
 
 
-                        } else if (palette.getLightVibrantSwatch() != null) {
-                            setColorsAccordingToSwatch(palette.getLightVibrantSwatch() , fab, collapsingToolbarLayout);
+                    } else if (palette.getDarkVibrantSwatch() != null) {
+                        setColorsAccordingToSwatch(palette.getDarkVibrantSwatch() , fab, collapsingToolbarLayout);
 
 
-                        } else if (palette.getDarkVibrantSwatch() != null) {
-                            setColorsAccordingToSwatch(palette.getDarkVibrantSwatch() , fab, collapsingToolbarLayout);
+                    } else if (palette.getLightMutedSwatch() != null) {
+                        setColorsAccordingToSwatch(palette.getLightMutedSwatch() , fab, collapsingToolbarLayout);
 
+                    } else if (palette.getDarkMutedSwatch() != null) {
+                        setColorsAccordingToSwatch(palette.getDarkMutedSwatch() , fab, collapsingToolbarLayout);
 
-                        } else if (palette.getLightMutedSwatch() != null) {
-                            setColorsAccordingToSwatch(palette.getLightMutedSwatch() , fab, collapsingToolbarLayout);
-
-                        } else if (palette.getDarkMutedSwatch() != null) {
-                            setColorsAccordingToSwatch(palette.getDarkMutedSwatch() , fab, collapsingToolbarLayout);
-
-                        }
                     }
                 };
 
@@ -191,13 +249,25 @@ public class AlbumViewFragment extends Fragment {
                     Palette.from(loadedImage).generate(paletteListener);
                 }
 
+                imageView.setImageBitmap(loadedImage);
+
             }
 
             @Override
-            public void onLoadingCancelled(String imageUri, View view) {
+            public void onBitmapFailed(Drawable errorDrawable) {
 
             }
-        });
+
+            @Override
+            public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+            }
+        };
+
+        Picasso.with(mainActivity)
+                .load(album.getCoverArt())
+                .error(R.drawable.sample_art)
+                .into(target);
 
         return rootView;
     }
@@ -219,6 +289,40 @@ public class AlbumViewFragment extends Fragment {
         }
     }
 
+    public void onBackTriggered(){
+
+        recyclerView.smoothScrollToPosition(0);
+        fab.hide();
+
+        moveX.reverse();
+        moveY.reverse();
+        scaleX.reverse();
+        scaleY.reverse();
+        revealAnimation.reverse();
+        revealAnimation.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animator) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animator) {
+                getActivity().getSupportFragmentManager().beginTransaction().remove(AlbumViewFragment.this).commit();
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animator) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animator) {
+
+            }
+        });
+
+    }
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);/**
@@ -231,8 +335,15 @@ public class AlbumViewFragment extends Fragment {
     }
 
     @Override
+    public void onStop() {
+
+        super.onStop();
+    }
+
+    @Override
     public void onDetach() {
-        mainActivity.getGod().setLibraryStatusBarColor(Color.parseColor("#00000000"));
+        mainActivity.getGod().setLibraryStatusBarColor(mainActivity.getOptions().getPrimaryColor());
+        mainActivity.enableNavBar();
         super.onDetach();
         mListener = null;
     }

@@ -5,6 +5,7 @@ import android.animation.RectEvaluator;
 import android.content.Context;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.support.v4.animation.ValueAnimatorCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
@@ -16,7 +17,7 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nineoldandroids.animation.ValueAnimator;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.io.Serializable;
@@ -55,7 +56,8 @@ public class God implements Serializable{
     View repeatButton, previousButton, pauseButton, nextButton, shuffleButton;
     View timeControl;
 
-    ObjectAnimator nowPlayingAnimation, previewAnimation;
+    android.animation.ValueAnimator nowPlayingAnimation;
+    android.animation.ValueAnimator previewAnimation;
 
     int height;
 
@@ -72,7 +74,7 @@ public class God implements Serializable{
 
     public void setNowPlayingStatusBar(RelativeLayout nowPlayingStatusBar) {
         //nowPlayingStatusBar.setAlpha(0);
-        nowPlayingAnimation = ObjectAnimator.ofFloat(nowPlayingStatusBar, View.SCALE_Y, 0, 1);
+        nowPlayingAnimation = ObjectAnimator.ofFloat(nowPlayingStatusBar, "scaleY", 0, 1).setDuration(300);
         //nowPlayingAnimation.setCurrentFraction(0f);
         nowPlayingAnimation.setCurrentPlayTime(0);
         this.nowPlayingStatusBar = nowPlayingStatusBar;
@@ -99,7 +101,9 @@ public class God implements Serializable{
         return preview;
     }
 
-    public void setPreview(RelativeLayout preview) {
+    public void setPreview(RelativeLayout p) {
+        preview = p;
+        Log.d("TAG", "Setting Preview");
         Rect bounds = new Rect();
         preview.getLocalVisibleRect(bounds);
         Rect from = new Rect(bounds);
@@ -107,10 +111,8 @@ public class God implements Serializable{
         to.bottom = 0;
         previewAnimation = ObjectAnimator.ofObject(preview, "clipBounds", new verendus.leshan.music.views.RectEvaluator(), to, from);
         //previewAnimation.setCurrentFraction(0f);
-        previewAnimation.start();
-        previewAnimation.setCurrentPlayTime(0L);
-
-        this.preview = preview;
+        //previewAnimation.start();
+        previewAnimation.setCurrentPlayTime(previewAnimation.getDuration());
     }
 
     public SlidingUpPanelLayout.PanelSlideListener getPanelSlideListener(){
@@ -128,9 +130,11 @@ public class God implements Serializable{
                     if(fraction > .05f) {
                         //previewAnimation.setCurrentFraction(fraction);
                         previewAnimation.setCurrentPlayTime((long) (fraction * previewAnimation.getDuration()));
+                        preview.setVisibility(View.VISIBLE);
                     }else {
                         //previewAnimation.setCurrentFraction(.05f);
                         previewAnimation.setCurrentPlayTime((long) (.05f * previewAnimation.getDuration()));
+                        preview.setVisibility(View.INVISIBLE);
                     }
                 }
 
@@ -191,6 +195,9 @@ public class God implements Serializable{
 
             @Override
             public void onPanelCollapsed(View panel) {
+
+                mainActivity.enableNavBar();
+
             }
 
             @Override
@@ -201,6 +208,8 @@ public class God implements Serializable{
                 }
 
                 isNowPlayingPanelOpen = true;
+
+                mainActivity.disableNavBar();
 
             }
 
@@ -266,7 +275,7 @@ public class God implements Serializable{
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (mainActivity.getMusicService() != null && fromUser) {
                     //if (mainActivity.getMusicService().isPlaying()) {
-                        mainActivity.getMusicService().getMediaPlayer().seekTo(progress);
+                        mainActivity.getMusicService().seekTo(progress);
                     //} else {
                        // mainActivity.getMusicService().pausePosition = progress;
                     //}
@@ -284,29 +293,29 @@ public class God implements Serializable{
             }
         });
 
-        slider.setOnTouchListener(new View.OnTouchListener() {
+        /*slider.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
-                switch (event.getAction()){
-                    case MotionEvent.ACTION_DOWN :
+                if(nowPlayingViewPager != null) {
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
 
-                        nowPlayingViewPager.setPagingEnabled(false);
-                        Log.d("TAG", "TOUCH_DOWN");
+                            nowPlayingViewPager.setPagingEnabled(false);
 
-                        break;
+                            break;
 
-                    case MotionEvent.ACTION_UP :
+                        case MotionEvent.ACTION_UP:
 
-                        nowPlayingViewPager.setPagingEnabled(true);
-                        Log.d("TAG", "TOUCH_UP");
+                            nowPlayingViewPager.setPagingEnabled(true);
 
-                        break;
+                            break;
+                    }
                 }
 
                 return false;
             }
-        });
+        });*/
 
         this.slider = slider;
         startThread();
@@ -473,24 +482,6 @@ public class God implements Serializable{
         return time;
     }
 
-    public static ImageLoader getImageLoder(Context context){
-        /**DisplayImageOptions defaultOptions = new DisplayImageOptions.Builder()
-                .cacheOnDisc(true)
-                .showImageForEmptyUri(R.drawable.sample_art)
-                .showImageOnFail(R.drawable.sample_art)
-                //.showImageOnLoading(R.drawable.sample_art)
-                .cacheOnDisk(true)
-                .build();
-
-        ImageLoaderConfiguration configuration = new ImageLoaderConfiguration.Builder(context)
-                .defaultDisplayImageOptions(defaultOptions).
-                        denyCacheImageMultipleSizesInMemory()
-                .build();
-
-        ImageLoader.getInstance().init(configuration);**/
-        return ImageLoader.getInstance();
-    }
-
     public boolean isDataLoaded(){return isDataLoaded;}
     public void dataLoaded(){isDataLoaded = true;}
 
@@ -528,6 +519,10 @@ public class God implements Serializable{
         }
 
         return genres.get(0);
+    }
+
+    public RelativeLayout getLibraryStatusBar() {
+        return libraryStatusBar;
     }
 
     public void stopThreads(){

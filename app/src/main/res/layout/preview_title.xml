@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout android:layout_width="match_parent"
+<LinearLayout android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/card_background">
 
     <TextView
         android:id="@+id/now_playing_preview_title"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="left"
         android:paddingBottom="1dp"
@@ -14,14 +15,14 @@
         android:paddingRight="16dp"
         android:paddingTop="10dp"
         android:singleLine="true"
-        android:text="Infra Turbo Pigcart Racer"
+        android:text="Pick a song"
         android:textColor="@color/text_color"
         android:textSize="22sp" />
 
 
     <TextView
         android:id="@+id/now_playing_preview_artist"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="left"
         android:paddingBottom="8dp"
@@ -29,7 +30,7 @@
         android:paddingRight="16dp"
         android:paddingTop="1dp"
         android:singleLine="true"
-        android:text="Deadmau5"
+        android:text="Any song"
         android:textColor="@color/detail_color"
         android:textSize="14sp" />
 

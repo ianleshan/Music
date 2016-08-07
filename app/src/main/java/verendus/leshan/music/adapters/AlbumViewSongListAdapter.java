@@ -10,8 +10,8 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.balysv.materialripple.MaterialRippleLayout;
 import com.makeramen.roundedimageview.RoundedImageView;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
@@ -39,11 +39,15 @@ public class AlbumViewSongListAdapter extends RecyclerView.Adapter<RecyclerView.
 
     public static class AlbumViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
         TextView songName;
+        TextView artistName;
+        TextView trackNumber;
 
         AlbumViewHolder(View itemView) {
             super(itemView);
-                    songName = (TextView)itemView.findViewById(R.id.album_view_song_temp_title);
-                    itemView.setOnClickListener(AlbumViewHolder.this);
+            songName = (TextView)itemView.findViewById(R.id.album_view_song_temp_title);
+            artistName = (TextView)itemView.findViewById(R.id.album_view_song_temp_artist);
+            trackNumber = (TextView)itemView.findViewById(R.id.album_view_song_temp_track_number);
+            itemView.setOnClickListener(AlbumViewHolder.this);
 
         }
 
@@ -115,15 +119,7 @@ public class AlbumViewSongListAdapter extends RecyclerView.Adapter<RecyclerView.
                 LinearLayout linearLayout = (LinearLayout)inflater.inflate
                         (R.layout.album_view_song_temp, parent, false);
 
-                MaterialRippleLayout layout = MaterialRippleLayout.on(linearLayout)
-                        .rippleAlpha(0.2f)
-                        .rippleColor(0xFF585858)
-                        .rippleOverlay(true)
-                        .rippleDuration(200)
-                        .rippleDelayClick(false)
-                        .create();
-
-                viewHolder = new AlbumViewHolder(layout);
+                viewHolder = new AlbumViewHolder(linearLayout);
 
                 break;
         }
@@ -149,9 +145,9 @@ public class AlbumViewSongListAdapter extends RecyclerView.Adapter<RecyclerView.
                 albumTitleViewHolder.artistName.setTypeface(font);
                 albumTitleViewHolder.albumInfo.setTypeface(font);
 
-                Log.d("DONE" , "DONE");
-                mainActivity.getImageLoader().displayImage(God.getArtistFromName(album.getArtist()).getCoverArt(), albumTitleViewHolder.artistIcon);
 
+                Picasso.with(mainActivity).load(God.getArtistFromName(album.getArtist()).getCoverArt())
+                        .into(albumTitleViewHolder.artistIcon);
 
                 break;
 
@@ -159,8 +155,12 @@ public class AlbumViewSongListAdapter extends RecyclerView.Adapter<RecyclerView.
 
                 AlbumViewHolder albumViewHolder = (AlbumViewHolder) holder;
                 albumViewHolder.songName.setTypeface(font);
+                albumViewHolder.artistName.setTypeface(font);
+                albumViewHolder.trackNumber.setTypeface(font);
                 final Song currSong = (Song) songs.get(position);
                 albumViewHolder.songName.setText(currSong.getTitle());
+                albumViewHolder.artistName.setText(currSong.getArtist());
+                albumViewHolder.trackNumber.setText(currSong.getTrackNumber() - 1000 + "");
 
                 break;
         }

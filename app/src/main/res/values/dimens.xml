@@ -5,6 +5,7 @@
     <dimen name="divider_bar">1dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="vertical_padding">0dp</dimen>
+    <dimen name="card_padding">5dp</dimen>
 
 
 </resources>

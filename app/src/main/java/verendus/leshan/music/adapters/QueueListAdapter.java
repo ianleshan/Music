@@ -1,6 +1,5 @@
 package verendus.leshan.music.adapters;
 
-import android.content.Context;
 import android.graphics.Typeface;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -10,12 +9,11 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.balysv.materialripple.MaterialRippleLayout;
-import com.nostra13.universalimageloader.core.ImageLoader;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
+import verendus.leshan.music.MainActivity;
 import verendus.leshan.music.R;
 import verendus.leshan.music.objects.Song;
 
@@ -26,9 +24,8 @@ public class QueueListAdapter extends RecyclerView.Adapter<QueueListAdapter.Recy
 
     ArrayList<Song> songs;
     LayoutInflater inflater;
-    Typeface font;
-    ImageLoader imageLoader;
-    Context context;
+    Typeface font, boldFont;
+    MainActivity context;
     static OnItemClickListener itemClickListener;
 
 
@@ -53,12 +50,12 @@ public class QueueListAdapter extends RecyclerView.Adapter<QueueListAdapter.Recy
         }
     }
 
-    public QueueListAdapter(Context c, ArrayList<Song> songs, ImageLoader imageLoader) {
-        this.imageLoader = imageLoader;
+    public QueueListAdapter(MainActivity c, ArrayList<Song> songs) {
         this.songs = songs;
         inflater = LayoutInflater.from(c);
         context = c;
         font = Typeface.createFromAsset(c.getAssets(), "Roboto-Regular.ttf");
+        boldFont = Typeface.createFromAsset(c.getAssets(), "boldFont.ttf");
     }
 
     @Override
@@ -83,6 +80,27 @@ public class QueueListAdapter extends RecyclerView.Adapter<QueueListAdapter.Recy
         Picasso.with(context).load(currSong.getCoverArt()).into(holder.albumArt);
         holder.itemView.setTag(position);
 
+        int currentPosition = MainActivity.getMusicService().getPosition();
+        if(position < currentPosition){
+
+            holder.itemView.setAlpha(.4f);
+            holder.songTitle.setTypeface(font);
+            holder.artist.setTypeface(font);
+
+        }else if(position == currentPosition){
+
+            holder.itemView.setAlpha(1f);
+            holder.songTitle.setTypeface(boldFont);
+            holder.artist.setTypeface(boldFont);
+
+        }else {
+
+            holder.itemView.setAlpha(1f);
+            holder.songTitle.setTypeface(font);
+            holder.artist.setTypeface(font);
+
+        }
+
 
     }
 
@@ -92,7 +110,7 @@ public class QueueListAdapter extends RecyclerView.Adapter<QueueListAdapter.Recy
     }
 
     public interface OnItemClickListener {
-        public void onItemClick(View view, int position);
+        void onItemClick(View view, int position);
     }
 
     public void setOnItemClickListener(final OnItemClickListener mItemClickListener) {

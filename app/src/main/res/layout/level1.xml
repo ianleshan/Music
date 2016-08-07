@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    android:id="@+id/level1_container">
+    android:id="@+id/level1_container"
+    android:fitsSystemWindows="true">
 
-    <RelativeLayout
+    <FrameLayout
         android:id="@+id/library_fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-    </RelativeLayout>
+    </FrameLayout>
 
-    <RelativeLayout
+    <FrameLayout
         android:id="@+id/level1_fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-    </RelativeLayout>
+    </FrameLayout>
 
 </RelativeLayout>

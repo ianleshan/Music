@@ -57,7 +57,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="BASS BOOST"
-                    android:textColor="@color/primary"
+                    android:textColor="@color/detail"
                     android:padding="3dp"/>
 
                 <SeekBar
@@ -65,8 +65,8 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/bass_boost_slider"
                     android:layout_gravity="center"
-                    android:thumbTint="@color/primary"
-                    android:progressTint="@color/primary"/>
+                    android:thumbTint="@color/detail"
+                    android:progressTint="@color/detail"/>
 
             </LinearLayout>
 

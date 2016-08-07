@@ -1,13 +1,8 @@
 package verendus.leshan.music.views;
 
 import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.util.AttributeSet;
 import android.widget.ImageView;
-
-import com.nostra13.universalimageloader.core.display.BitmapDisplayer;
 
 /**
  * Created by leshan on 9/4/15.

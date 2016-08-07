@@ -13,6 +13,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.audiofx.AudioEffect;
@@ -21,20 +22,21 @@ import android.media.audiofx.EnvironmentalReverb;
 import android.media.audiofx.Equalizer;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.os.SystemClock;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.RatingCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
-import android.view.View;
 import android.widget.Toast;
 
-import com.nostra13.universalimageloader.core.assist.FailReason;
-import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
+import com.afollestad.materialdialogs.MaterialDialog;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,15 +55,13 @@ public class MusicService extends Service implements
         MediaPlayer.OnErrorListener {
 
     MediaPlayer mediaPlayer;
-    Equalizer equalizer;
-    BassBoost bassBoost;
-    EnvironmentalReverb environmentalReverb;
     AudioManager audioManager;
     AudioManager.OnAudioFocusChangeListener onAudioFocusChangeListener;
-    ArrayList<Song> queue;
+    ArrayList<Song> queue = new ArrayList<>();
     int songPosition;
     MusicChanger musicChanger;
     boolean isNewQueue = false;
+    boolean wasPlaying = false;
     MediaSessionCompat mediaSession;
     Notification notification;
     NotificationManager notificationManager;
@@ -104,6 +104,31 @@ public class MusicService extends Service implements
     @Override
     public void onPrepared(MediaPlayer mp) {
         mp.start();
+
+        Intent intent = new Intent();
+        intent.setAction("com.android.music.metachanged");
+        Bundle bundle = new Bundle();
+
+        // put the song's metadata
+        bundle.putString("track", queue.get(getPosition()).getTitle());
+        bundle.putString("artist", queue.get(getPosition()).getArtist());
+        bundle.putString("album", queue.get(getPosition()).getAlbumName());
+
+        // put the song's total duration (in ms)
+        bundle.putLong("duration", mp.getDuration()); // 4:05
+
+        // put the song's current position
+        bundle.putLong("position", 1L); // beginning of the song
+
+        // put the playback status
+        bundle.putBoolean("playing", true); // currently playing
+
+        // put your application's package
+        bundle.putString("scrobbling_source", "verendus.leshan.music");
+
+        intent.putExtras(bundle);
+        sendBroadcast(intent);
+
         musicChanger.onPlay(songPosition, isNewQueue);
         isNewQueue = false;
     }
@@ -142,25 +167,34 @@ public class MusicService extends Service implements
                     case AudioManager.AUDIOFOCUS_GAIN:
                         // resume playback
                         if (mediaPlayer == null) initMediaPlayer();
-                        else if (!mediaPlayer.isPlaying()) mediaPlayer.start();
+                        else if (!mediaPlayer.isPlaying() && wasPlaying){
+                            mediaPlayer.start();
+                            wasPlaying = false;
+                        }
                         mediaPlayer.setVolume(1.0f, 1.0f);
-                        Toast.makeText(getApplicationContext(), "Audio focus gained", Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(getApplicationContext(), "Audio focus gained", Toast.LENGTH_SHORT).show();
                         break;
 
                     case AudioManager.AUDIOFOCUS_LOSS:
                         // Lost focus for an unbounded amount of time: stop playback and release media mediaPlayer
-                        if (mediaPlayer.isPlaying()) mediaPlayer.stop();
+                        if (mediaPlayer.isPlaying()){
+                            mediaPlayer.stop();
+                            wasPlaying = true;
+                        }
                         mediaPlayer.release();
                         mediaPlayer = null;
                         isInitialized = false;
-                        Toast.makeText(getApplicationContext(), "Audio focus lost", Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(getApplicationContext(), "Audio focus lost", Toast.LENGTH_SHORT).show();
                         break;
 
                     case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                         // Lost focus for a short time, but we have to stop
                         // playback. We don't release the media mediaPlayer because playback
                         // is likely to resume
-                        if (mediaPlayer.isPlaying()) mediaPlayer.pause();
+                        if (mediaPlayer.isPlaying()) {
+                            mediaPlayer.pause();
+                            wasPlaying = true;
+                        }
                         break;
 
                     case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
@@ -184,9 +218,6 @@ public class MusicService extends Service implements
         isInitialized = false;
         mediaSession.release();
         mediaPlayer.release();
-        equalizer.release();
-        bassBoost.release();
-        environmentalReverb.release();
         audioManager.abandonAudioFocus(onAudioFocusChangeListener);
         if (notification != null) {
             notificationManager.cancel(ID);
@@ -220,20 +251,16 @@ public class MusicService extends Service implements
         mediaPlayer.setOnCompletionListener(this);
         mediaPlayer.setOnErrorListener(this);
 
-        equalizer = new Equalizer(0, mediaPlayer.getAudioSessionId());
-        equalizer.setEnabled(true);
-
-        bassBoost = new BassBoost(0, mediaPlayer.getAudioSessionId());
-        bassBoost.setEnabled(true);
-
-        environmentalReverb = new EnvironmentalReverb(0, mediaPlayer.getAudioSessionId());
-        environmentalReverb.setEnabled(false);
+        Intent equalizerIntent = new Intent(AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION);
+        equalizerIntent.putExtra(AudioEffect.EXTRA_AUDIO_SESSION, mediaPlayer.getAudioSessionId());
+        equalizerIntent.putExtra(AudioEffect.EXTRA_PACKAGE_NAME, "verendus.leshan.music");
+        sendBroadcast(equalizerIntent);
 
         isInitialized = true;
     }
 
     public void setQueue(ArrayList<Song> newQueue) {
-        queue = newQueue;
+        queue = (ArrayList<Song>) newQueue.clone();
         isNewQueue = true;
     }
 
@@ -249,6 +276,13 @@ public class MusicService extends Service implements
         queue.remove(adapterPosition);
     }
 
+    public void moveSongInQueueTo(int from, int to) {
+
+        queue.add(to, queue.get(from));
+        queue.remove(from);
+
+    }
+
     public class MusicBinder extends Binder {
         public MusicService getService() {
             return MusicService.this;
@@ -256,15 +290,18 @@ public class MusicService extends Service implements
     }
 
     public void playSong() {
-        Thread newThread = new Thread(new Runnable() {
+
+        if (mediaPlayer == null) initMediaPlayer();
+        audioManager.requestAudioFocus(onAudioFocusChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        if (mediaPlayer != null) mediaPlayer.reset();
+        if(queue.isEmpty())return;
+        final Song song = queue.get(songPosition);
+        final long songID = song.getSongId();
+
+
+        new Thread(new Runnable() {
             @Override
             public void run() {
-
-                if (!isInitialized) initMediaPlayer();
-                audioManager.requestAudioFocus(onAudioFocusChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-                if (mediaPlayer != null) mediaPlayer.reset();
-                final Song song = queue.get(songPosition);
-                long songID = song.getSongId();
 
                 Uri trackUri = ContentUris.withAppendedId(
                         android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -285,26 +322,21 @@ public class MusicService extends Service implements
                     e.printStackTrace();
                 }
 
+            }
+        }).start();
 
-                God.getImageLoder(getApplicationContext()).loadImage(song.getCoverArt(), new ImageLoadingListener() {
+        Target target = new Target() {
+            @Override
+            public void onBitmapLoaded(final Bitmap loadedImage, Picasso.LoadedFrom from) {
+
+                new Thread(new Runnable() {
                     @Override
-                    public void onLoadingStarted(String imageUri, View view) {
-
-                    }
-
-                    @Override
-                    public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
-
-                    }
-
-                    @Override
-                    public void onLoadingComplete(String imageUri, View view, final Bitmap loadedImage) {
-
+                    public void run() {
                         mediaSession.setMetadata(new MediaMetadataCompat.Builder()
                                 .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, song.getArtist())
                                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, song.getAlbumName())
                                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, song.getTitle())
-                                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, 10000)
+                                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, song.getDuration())
                                 .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART,
                                         loadedImage)
                                 .build());
@@ -339,7 +371,7 @@ public class MusicService extends Service implements
                                 .addAction(R.drawable.ic_previous, "Previous", previousPendingIntent) // #0
                                 .addAction(R.drawable.ic_pause, "Pause", playPendingIntent)  // #1
                                 .addAction(R.drawable.ic_next, "Next", nextPendingIntent)     // #2
-                                .addAction(R.mipmap.ic_queue_music, "Queue", null)
+                                //.addAction(R.mipmap.ic_queue_music, "Queue", null)
                                 .setStyle(new NotificationCompat.MediaStyle()
                                         .setShowActionsInCompactView(1)
                                         .setMediaSession(mediaSession.getSessionToken()))
@@ -348,20 +380,27 @@ public class MusicService extends Service implements
                         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
                         notificationManager.notify(ID, notification);
                         startForeground(ID, notification);
-
-
                     }
+                }).start();
 
-                    @Override
-                    public void onLoadingCancelled(String imageUri, View view) {
-
-                    }
-                });
 
             }
-        });
 
-        newThread.start();
+            @Override
+            public void onBitmapFailed(Drawable errorDrawable) {
+
+            }
+
+            @Override
+            public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+            }
+        };
+
+        Picasso.with(getApplicationContext())
+                .load(song.getCoverArt())
+                .into(target);
+
 
     }
 
@@ -384,14 +423,12 @@ public class MusicService extends Service implements
             @Override
             public void onReceive(Context context, Intent intent) {
                 playNext();
-
             }
         };
         BroadcastReceiver becomingNoisy = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 pauseSong();
-                Toast.makeText(getApplicationContext(), "Headphones, where art you??", Toast.LENGTH_SHORT).show();
             }
         };
         BroadcastReceiver stopService = new BroadcastReceiver() {
@@ -408,17 +445,80 @@ public class MusicService extends Service implements
     }
 
 
+    public void seekTo(int progress) {
+        if(mediaPlayer != null && !queue.isEmpty()) {
+
+            mediaPlayer.seekTo(progress);
+
+            Intent intent = new Intent();
+            intent.setAction("com.android.music.playstatechanged");
+            Bundle bundle = new Bundle();
+
+            bundle.putString("track", queue.get(getPosition()).getTitle());
+            bundle.putString("artist", queue.get(getPosition()).getArtist());
+            bundle.putString("album", queue.get(getPosition()).getAlbumName());
+
+            bundle.putLong("duration", mediaPlayer.getDuration()); // 4:05
+            bundle.putLong("position", mediaPlayer.getCurrentPosition()); // 0:30
+            bundle.putBoolean("playing", mediaPlayer.isPlaying()); // currently playing
+            bundle.putString("scrobbling_source", "verendus.leshan.music");
+            intent.putExtras(bundle);
+            sendBroadcast(intent);
+        }
+    }
+
     public void pauseSong() {
-        mediaPlayer.pause();
-        //pausePosition = mediaPlayer.getCurrentPosition();
-        stopForeground(false);
+        if(mediaPlayer != null && !queue.isEmpty()) {
+            mediaPlayer.pause();
+
+            Intent intent = new Intent();
+            intent.setAction("com.android.music.playstatechanged");
+            Bundle bundle = new Bundle();
+
+            bundle.putString("track", queue.get(getPosition()).getTitle());
+            bundle.putString("artist", queue.get(getPosition()).getArtist());
+            bundle.putString("album", queue.get(getPosition()).getAlbumName());
+
+            bundle.putLong("duration", mediaPlayer.getDuration()); // 4:05
+            bundle.putLong("position", mediaPlayer.getCurrentPosition()); // 0:30
+            bundle.putBoolean("playing", false); // currently playing
+            bundle.putString("scrobbling_source", "verendus.leshan.music");
+            intent.putExtras(bundle);
+            sendBroadcast(intent);
+
+            musicChanger.onMusicPause();
+            //pausePosition = mediaPlayer.getCurrentPosition();
+            stopForeground(false);
+        }
 
     }
 
     public void resumeSong() {
-        mediaPlayer.start();
-        //mediaPlayer.seekTo(pausePosition);
-        startForeground(ID, notification);
+        if(mediaPlayer != null && !queue.isEmpty()) {
+            mediaPlayer.start();
+
+            Intent intent = new Intent();
+            intent.setAction("com.android.music.playstatechanged");
+            Bundle bundle = new Bundle();
+
+            bundle.putString("track", queue.get(getPosition()).getTitle());
+            bundle.putString("artist", queue.get(getPosition()).getArtist());
+            bundle.putString("album", queue.get(getPosition()).getAlbumName());
+
+            bundle.putLong("duration", mediaPlayer.getDuration()); // 4:05
+            bundle.putLong("position", mediaPlayer.getCurrentPosition()); // 0:30
+            bundle.putBoolean("playing", true); // currently playing
+            bundle.putString("scrobbling_source", "verendus.leshan.music");
+            intent.putExtras(bundle);
+            sendBroadcast(intent);
+
+            musicChanger.onMusicResume();
+            //mediaPlayer.seekTo(pausePosition);
+            if (notification != null) startForeground(ID, notification);
+        }else {
+            initMediaPlayer();
+            playSong();
+        }
     }
 
     public void pauseResumeSong() {
@@ -453,14 +553,6 @@ public class MusicService extends Service implements
         songPosition++;
         if (songPosition == queue.size()) songPosition = 0;
         playSong();
-    }
-
-    public Equalizer getEqualizer() {
-        return equalizer;
-    }
-
-    public BassBoost getBassBoost() {
-        return bassBoost;
     }
 
     public int getPosition() {

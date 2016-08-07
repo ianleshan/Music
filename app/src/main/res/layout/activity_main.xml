@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/primary">
+    android:background="@color/primary"
+    android:fitsSystemWindows="false">
 
 
     <RelativeLayout
@@ -27,47 +28,22 @@
     </RelativeLayout>
 
 
-    <RelativeLayout
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true">
 
         <include layout="@layout/drawer_layout" />
 
-    </RelativeLayout>
+    </FrameLayout>
 
-    <RelativeLayout
+    <!--<verendus.leshan.music.views.FittedFrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fitsSystemWindows="true"
-        android:id="@+id/level2_fragment_container">
+        android:fitsSystemWindows="true">
 
-    </RelativeLayout>
+        <include layout="@layout/level2" />
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#0b0b0b"
-        android:id="@+id/loading_screen">
+    </verendus.leshan.music.views.FittedFrameLayout>-->
 
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@mipmap/muziki_new_icon"
-            android:layout_centerVertical="true"
-            android:layout_centerHorizontal="true"
-            android:id="@+id/imageView" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Loading"
-            android:textSize="32sp"
-            android:id="@+id/textView2"
-            android:layout_below="@+id/imageView"
-            android:layout_centerHorizontal="true"
-            android:padding="20dp"/>
-
-    </RelativeLayout>
-
-</RelativeLayout>
+</FrameLayout>

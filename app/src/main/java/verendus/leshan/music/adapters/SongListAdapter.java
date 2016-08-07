@@ -10,13 +10,11 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.nostra13.universalimageloader.core.ImageLoader;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
 import verendus.leshan.music.R;
-import verendus.leshan.music.objects.God;
 import verendus.leshan.music.objects.Song;
 
 /**
@@ -27,7 +25,6 @@ public class SongListAdapter extends RecyclerView.Adapter<SongListAdapter.Recycl
     ArrayList<Song> songs;
     LayoutInflater inflater;
     Typeface font;
-    ImageLoader imageLoader;
     Context context;
     static OnItemClickListener itemClickListener;
 
@@ -53,8 +50,7 @@ public class SongListAdapter extends RecyclerView.Adapter<SongListAdapter.Recycl
         }
     }
 
-    public SongListAdapter(Context c, ArrayList<Song> songs, ImageLoader imageLoader) {
-        this.imageLoader = imageLoader;
+    public SongListAdapter(Context c, ArrayList<Song> songs) {
         this.songs = songs;
         inflater = LayoutInflater.from(c);
         context = c;
@@ -97,7 +93,10 @@ public class SongListAdapter extends RecyclerView.Adapter<SongListAdapter.Recycl
         }else {
             imageLoader.displayImage(currSong.getCoverArt(), holder.albumArt);
         }*/
-        Picasso.with(context).load(currSong.getCoverArt()).into(holder.albumArt);
+        Picasso.with(context)
+                .load(currSong.getCoverArt())
+                .error(R.drawable.sample_art)
+                .into(holder.albumArt);
         //imageLoader.displayImage(currSong.getCoverArt(), holder.albumArt);
         //set position as tag
         holder.itemView.setTag(position);

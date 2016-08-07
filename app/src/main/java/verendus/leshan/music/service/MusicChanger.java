@@ -8,4 +8,6 @@ public interface MusicChanger {
     public void onPlay(int position, boolean isNewQueue);
     public void onPrevious(int position);
     public void onNext(int position);
+    public void onMusicPause();
+    public void onMusicResume();
 }

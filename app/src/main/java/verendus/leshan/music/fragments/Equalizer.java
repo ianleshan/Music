@@ -49,6 +49,7 @@ public class Equalizer extends Fragment {
         super.onCreate(savedInstanceState);
 
         mainActivity = ((MainActivity) getActivity());
+        mainActivity.disableNavBar();
         god = mainActivity.getGod();
     }
 
@@ -58,7 +59,7 @@ public class Equalizer extends Fragment {
         // Inflate the layout for this fragment
         final View rootView = inflater.inflate(R.layout.fragment_equalizer, container, false);
 
-        linearLayout = (LinearLayout) rootView.findViewById(R.id.bands_linear_layout);
+        /*linearLayout = (LinearLayout) rootView.findViewById(R.id.bands_linear_layout);
         ArrayList<String> equalizerPresetNames = new ArrayList<>();
         ArrayAdapter<String> equalizerSpinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, equalizerPresetNames);
         equalizerSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -131,15 +132,14 @@ public class Equalizer extends Fragment {
 
             Log.d("EQUALIZER", equalizer.getBandLevel(index) + "");
 
-            seekBar.setProgressColor(getResources().getColor(R.color.primary));
-            seekBar.setThumbColor(getResources().getColor(R.color.primary));
+            seekBar.setProgressColor(getResources().getColor(R.color.detail));
+            seekBar.setThumbColor(getResources().getColor(R.color.detail));
 
             LinearLayout equalizerBandLayout = new LinearLayout(getContext());
             TextView bandFrequency = new TextView(getContext());
 
             bandFrequency.setText(equalizer.getCenterFreq(index) / 1000 + "Hz");
             bandFrequency.setGravity(Gravity.CENTER);
-            bandFrequency.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
 
             equalizerBandLayout.addView(bandFrequency);
             equalizerBandLayout.addView(seekBar);
@@ -172,7 +172,7 @@ public class Equalizer extends Fragment {
 
             }
         });
-
+*/
 
         return rootView;
 
@@ -193,5 +193,6 @@ public class Equalizer extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
+        mainActivity.enableNavBar();
     }
 }

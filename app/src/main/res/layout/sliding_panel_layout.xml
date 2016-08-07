@@ -23,6 +23,15 @@
 
     </verendus.leshan.music.views.MySlidingUpLayout>
 
+    <verendus.leshan.music.views.FittedFrameLayout
+        android:id="@+id/level2_fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
+        >
+
+    </verendus.leshan.music.views.FittedFrameLayout>
+
 
 
 </RelativeLayout>

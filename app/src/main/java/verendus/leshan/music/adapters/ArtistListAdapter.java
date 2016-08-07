@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.CardView;
@@ -14,13 +13,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.assist.FailReason;
-import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -42,7 +38,6 @@ public class ArtistListAdapter extends RecyclerView.Adapter<ArtistListAdapter.Al
     LayoutInflater inflater;
     Context context;
     Typeface font;
-    ImageLoader imageLoader;
     ImageView iv;
     static OnItemClickListener itemClickListener;
 
@@ -51,13 +46,13 @@ public class ArtistListAdapter extends RecyclerView.Adapter<ArtistListAdapter.Al
     public static class AlbumViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
         TextView artistName;
         ImageView albumCover;
-        CardView cardView;
+        RelativeLayout cardView;
 
         AlbumViewHolder(View itemView) {
             super(itemView);
                     artistName = (TextView)itemView.findViewById(R.id.artist_temp_name);
             albumCover = (ImageView)itemView.findViewById(R.id.artist_temp_art);
-            cardView = (CardView) itemView.findViewById(R.id.artist_temp_card_view);
+            cardView = (RelativeLayout) itemView.findViewById(R.id.artist_temp_layout_view);
                     itemView.setOnClickListener(AlbumViewHolder.this);
 
         }
@@ -70,8 +65,7 @@ public class ArtistListAdapter extends RecyclerView.Adapter<ArtistListAdapter.Al
         }
     }
 
-    public ArtistListAdapter(Context c, ArrayList<Artist> artists, ImageLoader imageLoader){
-        this.imageLoader = imageLoader;
+    public ArtistListAdapter(Context c, ArrayList<Artist> artists){
         this.artists = artists;
         inflater = LayoutInflater.from(c);
         context = c;
@@ -81,7 +75,7 @@ public class ArtistListAdapter extends RecyclerView.Adapter<ArtistListAdapter.Al
     @Override
     public AlbumViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
-        CardView linearLayout = (CardView) inflater.inflate
+        RelativeLayout linearLayout = (RelativeLayout) inflater.inflate
                         (R.layout.artist_temp, parent, false);
         AlbumViewHolder recyclerViewHolder = new AlbumViewHolder(linearLayout);
         return recyclerViewHolder;
@@ -90,9 +84,10 @@ public class ArtistListAdapter extends RecyclerView.Adapter<ArtistListAdapter.Al
     @Override
     public void onBindViewHolder(final AlbumViewHolder holder, int position) {
 
+        //holder.cardView.setBackgroundColor(context.getResources().getColor(R.color.card_background));
+        //holder.albumName.setTextColor(context.getResources().getColor(R.color.text_color));
+        holder.artistName.setTextColor(context.getResources().getColor(R.color.text_color));
 
-        holder.cardView.setCardBackgroundColor(Color.BLACK);
-        holder.artistName.setTextColor(Color.LTGRAY);
         //holder.moreIcon.setColorFilter(Color.LTGRAY);
 
         holder.artistName.setTypeface(font);
@@ -108,7 +103,7 @@ public class ArtistListAdapter extends RecyclerView.Adapter<ArtistListAdapter.Al
 
         if(currArtist.getCoverArt() == null) currArtist.setCoverArt("drawable://" + R.drawable.sample_art);
 
-        Target target = new Target() {
+        /*Target target = new Target() {
             @Override
             public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
                 holder.albumCover.setImageBitmap(bitmap);
@@ -157,22 +152,14 @@ public class ArtistListAdapter extends RecyclerView.Adapter<ArtistListAdapter.Al
             public void onPrepareLoad(Drawable placeHolderDrawable) {
 
             }
-        };
+        };*/
 
         Picasso.with(context)
                 .load(currArtist.getCoverArt())
-                .into(target);
+                .error(R.drawable.sample_art)
+                .into(holder.albumCover);
         holder.albumCover.setMinimumHeight(holder.albumCover.getMeasuredWidth());
         holder.itemView.setTag(position);
-    }
-
-    private void setColorsAccordingToSwatch(Palette.Swatch swatch, AlbumViewHolder holder) {
-
-        holder.cardView.setCardBackgroundColor(swatch.getRgb());
-        holder.artistName.setTextColor(swatch.getTitleTextColor());
-        //holder.moreIcon.setColorFilter(Color.WHITE);
-
-
     }
 
     @Override
@@ -188,69 +175,5 @@ public class ArtistListAdapter extends RecyclerView.Adapter<ArtistListAdapter.Al
         this.itemClickListener = mItemClickListener;
     }
 
-    public class RetrieveArtistFeedTask extends AsyncTask<String, Void, String> {
 
-        protected String doInBackground(String... urls) {
-            String albumArtUrl = null;
-            String x = null;
-
-                x = "http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist="
-                        + URLEncoder.encode(urls[0])
-                        + "&api_key="
-                        + "81f683d158289972f4532a1aefc70e48"
-                        + "&limit=" + 1 + "&page=" + 1;
-                Log.d("AAAERTIST", x);
-            try {
-                XMLParser parser = new XMLParser();
-                String xml = parser.getXmlFromUrl(x); // getting XML from URL
-                Document doc = parser.getDomElement(xml);
-                NodeList nl = doc.getElementsByTagName("image");
-                for (int i = 0; i < nl.getLength(); i++) {
-                    Element e = (Element) nl.item(i);
-                    Log.d("TAG", "Size = " + e.getAttribute("size") + " = " + parser.getElementValue(e));
-                    if (e.getAttribute("size").contentEquals("mega")) {
-                        albumArtUrl = parser.getElementValue(e);
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return albumArtUrl;
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            super.onPostExecute(s);
-
-            if(s == null) s = "drawable://" + R.drawable.sample_art;
-            Log.d("TAAAAAAAAAG!!", s);
-            imageLoader.displayImage(s, iv, new ImageLoadingListener() {
-                @Override
-                public void onLoadingStarted(String imageUri, View view) {
-
-                }
-
-                @Override
-                public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
-
-                }
-
-                @Override
-                public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
-                    /**if(album.getAlbumColorArt()==null) {
-                     ColorArt colorArt = new ColorArt(loadedImage);
-                     album.setAlbumColorArt(colorArt);
-                     holder.cardView.setCardBackgroundColor(album.getAlbumColorArt().getBackgroundColor());
-                     holder.albumName.setTextColor(album.getAlbumColorArt().getPrimaryColor());
-                     holder.artistName.setTextColor(album.getAlbumColorArt().getSecondaryColor());
-                     }**/
-                }
-
-                @Override
-                public void onLoadingCancelled(String imageUri, View view) {
-
-                }
-            });
-        }
-    }
 }
